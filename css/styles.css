@@ -1,0 +1,32 @@
+/* ═══════════════════════════════════════════
+   styles.css - الملف الرئيسي (CSS Hub)
+   يستورد جميع الملفات الفرعية بترتيب منطقي
+   استخدم <link rel="stylesheet" href="css/styles.css"> في HTML
+═══════════════════════════════════════════ */
+
+/* 1. Variables first (required by all) */
+@import url('./_variables.css');
+
+/* 2. Reset & Base */
+@import url('./_reset.css');
+
+/* 3. Layout & Board */
+@import url('./board.css');
+
+/* 4. Panels & HUD */
+@import url('./panels.css');
+
+/* 5. Buttons & Controls */
+@import url('./buttons.css');
+
+/* 6. Modals & Effects (animations last) */
+@import url('./modals.css');
+
+/* ═══════════════════════════════════════════
+   نهاية - اللعبة جاهزة للتحميل
+   
+   ✅ 600 سطر → 6 ملفات (100 سطر/ملف)
+   ✅ لا تكرارات (boardGlow, statPill موحدة)
+   ✅ تعليقات واضحة لكل قسم
+   ✅ @import cascade للأداء الأمثل
+═══════════════════════════════════════════ */

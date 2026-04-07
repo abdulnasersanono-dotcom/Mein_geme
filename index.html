@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Silk Road: The Golden Era</title>
+<!-- ربط ملف التنسيقات المنفصل -->
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- الطبقات الخلفية -->
+<div id="gameBg"></div>
+<canvas id="starCv"></canvas>
+<canvas id="pCv"></canvas>
+<div id="camFlash"></div>
+
+<!-- قفل الشاشة الرأسية -->
+<div id="rotatePrompt">
+  <div class="rotIcon">📱</div>
+  <div>الرجاء تدوير الجهاز</div>
+  <div style="font-size:10px;color:rgba(200,160,40,.6);letter-spacing:2px;">Landscape Mode Required</div>
+</div>
+
+<!-- ═══ الواجهة الرئيسية للعبة ═══ -->
+<div id="gameUI">
+
+  <!-- الطبقة 0: اللوحة (الخلفية، تملأ الوسط+اليمين) -->
+  <div id="boardArea">
+    <div class="boardGlow"></div>
+    <div id="boardCanvas">
+      <div id="boardGrid">
+        <svg id="boardSvg" viewBox="0 0 660 660" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- المرساة اليسرى: قائمة اللاعبين العمودية -->
+  <div id="leftPanel">
+    <!-- يتم ملؤها ديناميكياً بواسطة refreshOpponentPanels() -->
+  </div>
+
+  <!-- المرساة العلوية: لوحة المعلومات + سجل الأحداث -->
+  <div id="topAnchor">
+    <div id="topBar">
+      <!-- المال -->
+      <div class="statPill">
+        <div class="statIcon">🪙</div>
+        <div class="statBody">
+          <span class="statLabel">الدنانير</span>
+          <span class="statVal" id="moneyVal">1,500</span>
+        </div>
+      </div>
+      <!-- الجواهر -->
+      <div class="statPill">
+        <div class="statIcon">💎</div>
+        <div class="statBody">
+          <span class="statLabel">الجواهر</span>
+          <span class="statVal" id="gemVal">24</span>
+        </div>
+      </div>
+      <!-- XP -->
+      <div class="xpPill">
+        <span class="xpLabel">Lv.4</span>
+        <div class="xpTrack"><div class="xpFill" id="xpFill"></div></div>
+        <span class="xpNum" id="xpNum">840/2000</span>
+      </div>
+      <!-- الدور -->
+      <div class="turnPill" id="turnPill">دورك الآن ✦</div>
+      <!-- المؤقت -->
+      <div class="timerBadge" style="margin-left:auto">
+        <span class="ti">⏱</span>
+        <span class="tv" id="timer">0:45</span>
+      </div>
+      <!-- الإعدادات -->
+      <div class="settingsBtn" id="settingsBtn">⚙️</div>
+    </div>
+    <!-- شريط سجل الأحداث -->
+  </div>
+
+  <!-- منطقة الأزرار الرئيسية - مرساة أسفل اليمين (سهلة بالإبهام) -->
+  <div id="actionZone">
+    <!-- صف الأزرار الثانوية -->
+    <div id="secBtnRow">
+      <button class="secBtn" data-action="build">
+        <span class="secIco">🔨</span>
+        <span class="secLbl">بناء</span>
+      </button>
+      <button class="secBtn" data-action="trade">
+        <span class="secIco">🤝</span>
+        <span class="secLbl">تبادل</span>
+      </button>
+    </div>
+    <!-- زر الذهاب / النرد -->
+    <div id="diceWrap">
+      <div id="diceBtn" class="pulse">
+        <div id="diceBtnFace">
+          <div id="diceInner">
+            <div id="goText">GO</div>
+            <div id="goSub">اضغط للرمي</div>
+          </div>
+        </div>
+        <div id="diceBtnLabel">رمي النرد</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- أزرار العقارات - مرساة أسفل اليسار -->
+  <div id="leftActions">
+    <button class="secBtn" data-action="mortgage">
+      <span class="secIco">🏛</span>
+      <span class="secLbl">عقاراتي</span>
+    </button>
+  </div>
+
+</div><!-- /gameUI -->
+
+<!-- النافذة المنزلقة للعقار -->
+<div id="propSlide">
+  <div id="propSlideHead">
+    <button class="psClose" data-action="hidePropSlide">✕</button>
+    <div class="psTag">صك الملكية</div>
+    <div class="psName" id="psName">حصن المدينة</div>
+    <div class="psGroup" id="psGroup">المجموعة الحمراء</div>
+  </div>
+  <div id="propSlideBody">
+    <div class="deedBanner">بيان الإيجارات</div>
+    <table class="rt" id="propRentTable">
+      <!-- تم ملؤها ديناميكياً -->
+    </table>
+    <div class="propFootGrid" id="propFootGrid">
+      <!-- تم ملؤها ديناميكياً -->
+    </div>
+    <button class="buyBtn" id="buyPropBtn">شراء العقار</button>
+  </div>
+</div>
+
+<!-- بطاقة الحدث / اللف -->
+<div id="cardOverlay">
+  <div id="cardOvBg"></div>
+  <div id="scrollCard">
+    <div id="scrollBody">
+      <div class="sRoller"></div>
+      <div class="sParch">
+        <div class="sHead">
+          <span class="sIcoEl" id="sIcoEl">📜</span>
+          <div class="sTypEl" id="sTypEl">فرمان الوالي</div>
+          <div class="sTitEl" id="sTitEl">أمر سلطوي</div>
+          <div class="sDivEl">❧ ❧ ❧</div>
+        </div>
+        <div class="sTxtEl" id="sTxtEl"></div>
+        <div class="sRuleEl" id="sRuleEl"></div>
+        <div class="sFootEl">
+          <button class="sCloseEl" id="cardCloseBtn">حسناً — أذعنت</button>
+        </div>
+      </div>
+      <div class="sRoller"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ جميع النوافذ المنبثقة ══ -->
+<!-- الإعداد -->
+<div id="setupModal" class="modalOv">
+  <div class="modalBox" style="max-width:360px">
+    <div class="modalHead" style="background:linear-gradient(135deg,#3A2000,#7A4A00)">
+      <div class="modalTitle">🐪 Silk Road: The Golden Era</div>
+      <div class="modalSub">اختر اللاعبين للبدء</div>
+    </div>
+    <div class="modalBody">
+      <div class="setupCountRow">
+        <button class="countBtn" id="setupCountMinus">−</button>
+        <span>عدد اللاعبين: <strong id="setupCountVal">2</strong></span>
+        <button class="countBtn" id="setupCountPlus">+</button>
+      </div>
+      <div id="setupPlayerList"></div>
+      <button class="goldBtn" style="margin-top:14px;width:100%" id="startGameBtn">▶ &nbsp;ابدأ اللعبة</button>
+    </div>
+  </div>
+</div>
+
+<!-- الشراء -->
+<div id="buyModal" class="modalOv">
+  <div class="modalBox" style="max-width:300px">
+    <div class="modalHead" id="buyModalColor">
+      <div class="modalTitle" id="buyModalTitle">عقار</div>
+      <div class="modalSub">هل تريد الشراء؟</div>
+    </div>
+    <div class="modalBody">
+      <table class="rt" id="buyModalRents"></table>
+      <div class="buyInfoRow">
+        <span>السعر: <strong id="buyModalPrice" style="color:#FFD060">0</strong> din</span>
+        <span>رصيدك: <strong id="buyModalBalance" style="color:#40CC40">0</strong> din</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="goldBtn" style="flex:1" id="confirmBuyBtn">🏠 شراء</button>
+        <button class="grayBtn" style="flex:1" id="rejectBuyBtn">🔨 مزاد</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- المزاد -->
+<div id="auctionModal" class="modalOv">
+  <div class="modalBox" style="max-width:320px">
+    <div class="modalHead" id="auctionPropColor">
+      <div class="modalTitle" id="auctionPropName">مزاد</div>
+      <div class="modalSub">السعر الأصلي: <span id="auctionOrigPrice">0</span> din — <span id="auctionTimer" style="color:#FFD060">30</span> ث</div>
+    </div>
+    <div class="modalBody">
+      <div id="auctionBidList" style="margin-bottom:10px"></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input id="auctionMyBidInput" type="number" placeholder="مزايدتك..." class="dinInput" style="flex:1">
+        <button class="goldBtn" id="submitAuctionBtn">مزايدة</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- الرهن -->
+<div id="mortgageModal" class="modalOv">
+  <div class="modalBox" style="max-width:320px">
+    <div class="modalHead" style="background:linear-gradient(135deg,#1a0e00,#3a2000)">
+      <div class="modalTitle">🏦 رهن العقارات</div>
+      <div class="modalSub">رهن للحصول على سيولة</div>
+    </div>
+    <div class="modalBody">
+      <div id="mortgageList" style="max-height:240px;overflow-y:auto"></div>
+      <button class="grayBtn" style="width:100%;margin-top:10px" id="closeMortgageBtn">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- البناء -->
+<div id="buildModal" class="modalOv">
+  <div class="modalBox" style="max-width:340px">
+    <div class="modalHead" style="background:linear-gradient(135deg,#0e1e0e,#1a4a1a)">
+      <div class="modalTitle">🔨 بناء المنازل</div>
+      <div class="modalSub">يجب امتلاك المجموعة كاملة</div>
+    </div>
+    <div class="modalBody">
+      <div id="buildList" style="max-height:260px;overflow-y:auto"></div>
+      <button class="grayBtn" style="width:100%;margin-top:10px" id="closeBuildBtn">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- التجارة -->
+<div id="tradeModal" class="modalOv">
+  <div class="modalBox" style="max-width:380px">
+    <div class="modalHead" style="background:linear-gradient(135deg,#0e1a2e,#1a3060)">
+      <div class="modalTitle">🤝 التبادل التجاري</div>
+      <div class="modalSub">اختر ما تعرضه وما تطلبه</div>
+    </div>
+    <div class="modalBody">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div class="tradePlayerLabel" id="tradeFromName">أنت</div>
+          <input id="tradeFromMoney" type="number" placeholder="دنانير تعرضها" class="dinInput" style="width:100%;margin-bottom:6px">
+          <div id="tradeFromProps" class="tradePropList"></div>
+        </div>
+        <div>
+          <div class="tradePlayerLabel" id="tradeToName">المقابل</div>
+          <input id="tradeToMoney" type="number" placeholder="دنانير تطلبها" class="dinInput" style="width:100%;margin-bottom:6px">
+          <div id="tradeToProps" class="tradePropList"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="goldBtn" style="flex:1" id="submitTradeBtn">إرسال العرض</button>
+        <button class="grayBtn" style="flex:1" id="cancelTradeBtn">إلغاء</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- رد التجارة -->
+<div id="tradeResponseModal" class="modalOv">
+  <div class="modalBox" style="max-width:300px;text-align:center">
+    <div class="modalHead" style="background:linear-gradient(135deg,#1a3060,#2050A0)">
+      <div class="modalTitle">عرض تبادل</div>
+    </div>
+    <div class="modalBody">
+      <div id="tradeResDesc" style="font-size:13px;color:#3a2000;margin-bottom:16px;line-height:1.6"></div>
+      <div style="display:flex;gap:8px">
+        <button class="goldBtn" style="flex:1" id="acceptTradeBtn">✓ قبول</button>
+        <button class="redBtn" style="flex:1" id="rejectTradeBtn">✗ رفض</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- الإفلاس -->
+<div id="bankruptModal" class="modalOv">
+  <div class="modalBox" style="max-width:260px;text-align:center">
+    <div class="modalHead" style="background:linear-gradient(135deg,#200000,#600010)">
+      <div class="modalTitle" id="bankruptName">أفلس!</div>
+    </div>
+    <div class="modalBody" style="text-align:center;padding:20px">
+      <div style="font-size:48px">💀</div>
+      <div style="font-size:12px;color:#6a3a10;margin-top:8px">تم إخراج اللاعب من اللعبة</div>
+    </div>
+  </div>
+</div>
+
+<!-- نهاية اللعبة -->
+<div id="gameOverModal" class="modalOv">
+  <div class="modalBox" style="max-width:300px;text-align:center">
+    <div class="modalHead" style="background:linear-gradient(135deg,#3A2000,#8B5E00)">
+      <div class="modalTitle">🏆 انتهت اللعبة!</div>
+    </div>
+    <div class="modalBody" style="text-align:center;padding:24px">
+      <div style="font-size:36px;margin-bottom:8px" id="gameOverWinner"></div>
+      <div style="font-size:14px;color:#6a4a10;margin-bottom:4px">الثروة النهائية</div>
+      <div style="font-size:24px;font-weight:900;color:#FFD060;font-family:monospace" id="gameOverMoney"></div>
+      <button class="goldBtn" style="margin-top:18px;width:100%" id="newGameBtn">🔄 لعبة جديدة</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ربط JavaScript Modules ═══ -->
+<script type="module" src="js/main.js"></script>
+
+</body>
+</html>
