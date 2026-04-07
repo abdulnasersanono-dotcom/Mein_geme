@@ -62,8 +62,16 @@ function createTokens() {
 }
 
 function placeToken(el, sqIdx, playerIdx) {
-  // حساب المواقع + إزاحة للرموز المتعددة
-  // implementation here
+  const center = SQ_CENTERS[sqIdx % 40];
+  if (!center) return;
+  
+  const angleOffset = (playerIdx - 0.5) * 12; // إزاحة للرموز المتعددة
+  const radius = 18;
+  const dx = Math.cos(angleOffset * Math.PI / 180) * radius;
+  const dy = Math.sin(angleOffset * Math.PI / 180) * radius;
+  
+  el.setAttribute('x', center.x + dx);
+  el.setAttribute('y', center.y + dy);
 }
 
 function moveTokenAnim(playerIdx, toSq) {
@@ -185,13 +193,123 @@ export function doRollDice() {
   }, 1800);
 }
 
-// ... باقي الوظائف (landOnSquare, handlePropertyLanding, auction, etc.)
-// سيتم إكمالها في الخطوة التالية
+// إضافة SQ_CENTERS للتوافق مع main.js
+const SQ_CENTERS = []; // سيتم تعبئتها من main.js
 
-console.log('🎮 game.js محمل - منطق اللعبة جاهز 🏆');
+// دالة الهبوط على المربع
+function landOnSquare(playerIdx, sqIdx) {
+  const sq = BOARD_DATA[sqIdx % 40];
+  const p = G.players[playerIdx];
+  p.sq = sqIdx % 40;
+
+  camFollowSquare(p.sq);
+
+  switch (sq.type) {
+    case 'go':
+      toast('مررت على انطلق! +200 دينار 🪙');
+      p.money += 200;
+      G.bankMoney -= 200;
+      setMoney(p.money);
+      break;
+    case 'tax':
+      toast(`دفعت ${sq.amount} إتاوة 💸`);
+      deductMoney(playerIdx, sq.amount);
+      break;
+    case 'prop':
+      if (!G.props[sq.id]) {
+        openBuyModal(playerIdx, sq);
+      } else if (G.props[sq.id].owner !== playerIdx) {
+        const owner = G.props[sq.id].owner;
+        const rent = getRent(sq, G.props[sq.id].level || 0);
+        toast(`إيجار ${rent} للاعب ${owner + 1}`);
+        deductMoney(playerIdx, rent);
+        addMoney(owner, rent);
+      }
+      break;
+    case 'jail':
+      sendToJail(playerIdx);
+      break;
+    case 'gojail':
+      sendToJail(playerIdx);
+      break;
+    case 'lant':
+      drawLanternCard();
+      break;
+    case 'firm':
+      drawFirmanCard();
+      break;
+    default:
+      toast(`وصلت ${sq.n || 'مربع فارغ'}`);
+  }
+  
+  setTimeout(() => nextTurn(), 3000);
+}
+
+function deductMoney(playerIdx, amount) {
+  const p = G.players[playerIdx];
+  p.money = Math.max(0, p.money - amount);
+  G.bankMoney += amount;
+  setMoney(p.money);
+  if (p.money === 0) bankrupt(playerIdx);
+}
+
+function addMoney(playerIdx, amount) {
+  const p = G.players[playerIdx];
+  p.money += amount;
+  G.bankMoney -= amount;
+  setMoney(p.money);
+}
+
+function sendToJail(playerIdx) {
+  const p = G.players[playerIdx];
+  p.sq = 10; // jail square
+  p.jailTurns = 3;
+  placeToken(document.getElementById(`tok${playerIdx}`), 10, playerIdx);
+  sndJail();
+  burst(330, 330, 20, true);
+  toast(`${p.emoji} في السجن! ⛓`);
+  camEventFocus(10, true);
+  setTimeout(() => nextTurn(), 2000);
+}
+
+function getRent(sq, level) {
+  return sq.rent[level || 0];
+}
+
+function openBuyModal(playerIdx, sq) {
+  // TODO: فتح modal الشراء
+  toast(`يمكن شراء ${sq.n} بـ ${sq.price} دينار`);
+}
+
+function bankrupt(playerIdx) {
+  const p = G.players[playerIdx];
+  p.isBankrupt = true;
+  toast(`${p.emoji} أفلس! 💀`);
+  // نقل العقارات للبنك
+  setTimeout(() => nextTurn(), 1500);
+}
+
+// بطاقات
+function drawLanternCard() {
+  const card = LANTERN_CARDS[~~(Math.random() * LANTERN_CARDS.length)];
+  toast(card.txt);
+  // تنفيذ التأثير
+}
+
+function drawFirmanCard() {
+  const card = FIRMAN_CARDS[~~(Math.random() * FIRMAN_CARDS.length)];
+  toast(card.txt);
+  // تنفيذ التأثير
+}
+
+function endGame(winner) {
+  toast(`انتهت اللعبة! ${winner.emoji} الفائز 🏆`);
+}
+
+
 
 // 🔧 BRIDGE لإصلاح endTurn error (للـ HTML inline JS)
 // يربط nextTurn مع endTurn المتوقع global
 window.endTurn = nextTurn;
-console.log('✅ endTurn متاح كـ global bridge للـ HTML');
+
 

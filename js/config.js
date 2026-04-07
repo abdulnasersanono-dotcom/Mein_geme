@@ -102,4 +102,4 @@ export const GAME_DEFAULTS = {
   minPlayers: 2,
 };
 
-console.log('✅ config.js محمل - بيانات اللعبة جاهزة 🎲');
+

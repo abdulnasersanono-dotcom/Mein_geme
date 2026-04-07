@@ -31,9 +31,34 @@ import {
 } from './game.js';
 
 // ═══════════════════════════════════════════
-// حساب مراكز المربعات للكاميرا
-const SQ_CENTERS = []; // حساب 40 نقطة SVG من config
-// سيتم ملؤها باستخدام BOARD_DATA
+// حساب مراكز المربعات للكاميرا (660x660 SVG)
+// دالة حساب مراكز 40 مربع في لوحة Monopoly قياسية 660x660
+function computeSquareCenters(boardData) {
+  const centers = [];
+  const B = 660, C = 96, S = (B - 2 * C) / 9; // side ~60
+  const half = B / 2;
+  
+  for (let id = 0; id < 40; id++) {
+    let x, y;
+    if (id < 11) { // bottom
+      x = C + id * S + S/2;
+      y = B - C - S/2;
+    } else if (id < 20) { // left
+      x = C + S/2;
+      y = B - C - (id - 10) * S - S/2;
+    } else if (id < 30) { // top
+      x = B - C - (id - 20) * S - S/2;
+      y = C + S/2;
+    } else { // right
+      x = B - C - S/2;
+      y = C + (id - 30) * S + S/2;
+    }
+    centers[id] = {x, y};
+  }
+  return centers;
+}
+
+const SQ_CENTERS = computeSquareCenters(BOARD_DATA);
 
 // ═══════════════════════════════════════════
 // تهيئة شاملة للعبة
@@ -57,8 +82,8 @@ export function initApp() {
   // 5. فتح شاشة الإعداد
   openSetup();
 
-  console.log('🚀 لعبة طريق الحرير مهيأة بالكامل!');
 }
+
 
 // ═══════════════════════════════════════════
 // ربط DOM events (بدون inline onclick)
@@ -79,34 +104,92 @@ function setupEventListeners() {
       haptic('light');
     });
   });
+  
+  setupSetupEvents();
 }
 
 // معالج الأزرار الثانوية
 function handleSecAction(action) {
-  switch (action) {
-    case 'build': openBuildModal(); break;
-    case 'trade': openTradeModal(); break;
-    case 'mortgage': openMortgageModal(); break;
-  }
+  toast(`زر ${action} غير مُنفذ بعد`);
 }
 
 // ═══════════════════════════════════════════
-// شاشة الإعداد (setup)
-let setupPlayerCount = 2;
-let setupPlayerTypes = ['human', 'bot', 'bot', 'bot', 'bot', 'bot'];
+// إضافة event listeners لشاشة الإعداد
+function setupSetupEvents() {
+  // Ensure vars defined
+  window.setupPlayerCount = window.setupPlayerCount || 2;
+  window.setupPlayerTypes = window.setupPlayerTypes || ['human', 'bot', 'bot', 'bot', 'bot', 'bot'];
+  
+  // Count buttons
+  const minusBtn = document.getElementById('setupCountMinus');
+  if (minusBtn) minusBtn.addEventListener('click', () => {
+    if (window.setupPlayerCount > 2) {
+      window.setupPlayerCount--;
+      document.getElementById('setupCountVal').textContent = window.setupPlayerCount;
+      window.renderSetupPlayers();
+    }
+  });
+  
+  const plusBtn = document.getElementById('setupCountPlus');
+  if (plusBtn) plusBtn.addEventListener('click', () => {
+    if (setupPlayerCount < 6) {
+      setupPlayerCount++;
+      document.getElementById('setupCountVal').textContent = setupPlayerCount;
+      renderSetupPlayers();
+    }
+  });
+  
+  // Start button
+  const startBtn = document.getElementById('startGameBtn');
+  if (startBtn) startBtn.addEventListener('click', startGameFromSetup);
+}
+
+// ═══════════════════════════════════════════
+// شاشة الإعداد (setup) - Global for access
+window.setupPlayerCount = 2;
+window.setupPlayerTypes = ['human', 'bot', 'bot', 'bot', 'bot', 'bot'];
 
 export function openSetup() {
   G.phase = 'setup';
   const modal = document.getElementById('setupModal');
   if (modal) modal.classList.add('open');
-  renderSetupPlayers();
+  window.renderSetupPlayers();
 }
 
-function renderSetupPlayers() {
-  // Implementation
+window.renderSetupPlayers = function() {
+  const listEl = document.getElementById('setupPlayerList');
+  if (!listEl) return;
+  
+  listEl.innerHTML = '';
+  for (let i = 0; i < setupPlayerCount; i++) {
+    const div = document.createElement('div');
+    div.className = 'setupPlayerRow';
+    div.innerHTML = `
+      <div class="setupPlayerInfo">
+        <span class="setupEmoji">${PLAYER_EMOJIS[i] || '👤'}</span>
+        <span>لاعب ${i+1}</span>
+      </div>
+      <div class="setupPlayerType">
+        <label class="typeLabel">
+          <input type="radio" name="p${i}" value="human" ${setupPlayerTypes[i] === 'human' ? 'checked' : ''}>
+          بشري
+        </label>
+        <label class="typeLabel">
+          <input type="radio" name="p${i}" value="bot" ${setupPlayerTypes[i] === 'bot' ? 'checked' : ''}>
+          بوت
+        </label>
+      </div>`;
+    listEl.appendChild(div);
+  }
 }
 
 function startGameFromSetup() {
+  // Update types from radio buttons
+  for (let i = 0; i < setupPlayerCount; i++) {
+    const radio = document.querySelector(`input[name="p${i}"]:checked`);
+    setupPlayerTypes[i] = radio ? radio.value : 'bot';
+  }
+  
   const players = [];
   for (let i = 0; i < setupPlayerCount; i++) {
     players.push({
@@ -125,10 +208,10 @@ document.addEventListener('DOMContentLoaded', initApp);
 
 // إعادة التهيئة عند تغيير الحجم
 window.addEventListener('resize', () => {
-  if (pCV) {
+  if (typeof pCV !== 'undefined' && pCV) {
     pCV.width = innerWidth;
     pCV.height = innerHeight;
   }
 });
 
-console.log('🔗 main.js - نقطة الدخول جاهزة 🎯');
+

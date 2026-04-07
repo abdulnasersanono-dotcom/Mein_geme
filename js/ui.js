@@ -191,17 +191,52 @@ export function buildBoard() {
     red: '#8B1010', yellow: '#B8920A', green: '#1A5C2A', navy: '#0A1F6B'
   };
 
-  // دالة بناء كل مربع
-  const buildCell = (id, x, y, w, h, side) => {
-    // ... الكود الطويل لبناء SVG كل مربع
-    // مستخرج من الأصلي - مختصر هنا للمساحة
-    return ''; // placeholder - الكود الكامل في النسخة النهائية
+// دالة بناء كل مربع
+  const buildCell = (id, x, y, w, h, side, data) => {
+    const sq = data[id];
+    const name = sq.n || '';
+    const col = sq.col || '#888';
+    const icon = sq.icon || '';
+    const type = sq.type || 'empty';
+
+    let html = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" ry="8" fill="#2a1a0f" stroke="${col}" stroke-width="3"/>`;
+    
+    if (icon || type === 'go' || type === 'jail') {
+      html += `<text x="${x + w/2}" y="${y + h/2 + 6}" text-anchor="middle" font-size="20" fill="#FFD060" font-weight="bold">${icon || sq.n?.slice(0,1) || '?'}</text>`;
+    } else if (name) {
+      html += `<text x="${x + w/2}" y="${y + h/2 + 4}" text-anchor="middle" font-size="12" fill="#e8d5a3" font-weight="600">${name}</text>`;
+    }
+
+    if (type === 'go') html += `<path d="M ${x+10} ${y+10} L ${x+w-10} ${y+10} L ${x+w-10} ${y+25}" stroke="#FFD060" stroke-width="4" fill="none"/>`;
+    if (type === 'jail') html += `<rect x="${x + 8}" y="${y + 8}" width="12" height="12" fill="#8B4513" stroke="#654321" stroke-width="2"/>`;
+
+    return html;
   };
 
   const svg = document.getElementById('boardSvg');
   if (svg) {
-    svg.innerHTML = `<!-- SVG اللوحة الكاملة 660x660 مع 40 مربع -->`;
-    console.log('✅ SVG اللوحة تم بناؤها');
+    let boardHTML = '<defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+    
+    // بناء اللوحة كاملة
+    const B = 660, C = 96, S = (B - 2 * C) / 9;
+    for (let id = 0; id < 40; id++) {
+      let x, y, w = S, h = S;
+      
+      if (id < 11) { // bottom
+        x = C + id * S; y = B - C - S;
+      } else if (id < 20) { // left
+        x = C; y = B - C - (id - 10) * S;
+      } else if (id < 30) { // top
+        x = B - C - (id - 20) * S; y = C;
+      } else { // right
+        x = B - C - S; y = C + (id - 30) * S;
+      }
+      
+      if (id % 10 === 0) { w = C; h = C; } // corners wider
+      boardHTML += buildCell(id, x, y, w, h, w === S ? 'side' : 'corner', BOARD_DATA);
+    }
+    
+    svg.innerHTML = boardHTML;
   }
 }
 
@@ -276,4 +311,4 @@ export function enableDiceBtn(on) {
   if (db) db.classList.toggle('pulse', on);
 }
 
-console.log('🎨 ui.js محمل - التأثيرات و الواجهة جاهزة ✨');
+

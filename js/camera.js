@@ -256,4 +256,4 @@ export function initTouchControls() {
   }, { passive: false });
 }
 
-console.log('📹 camera.js محمل - نظام الكاميرا 3D جاهز 🚀');
+
