@@ -862,6 +862,18 @@ html,body{
 
 <body>
 
+  <!-- UI SCREENS — يجب أن يكون أول شيء -->
+  <div id="app" style="
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    overflow: hidden;
+  "></div>
+
+  <!-- Background layers -->
+  <div id="gameBg"></div>
+  
+
 <!-- Background layers -->
 <div id="gameBg"></div>
 <canvas id="starCv"></canvas>
