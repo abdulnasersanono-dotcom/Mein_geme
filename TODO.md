@@ -1,23 +1,18 @@
-// ═══════════════════════════════════════════
-الآن بعد أن أصبحت المصفوفات جاهزة، اطلب من Claude تفعيل المنطق (Logic) الخاص بها. انسخ له هذه التعليمات:
+## Progress Tracker for Pre-Game Screens Fix
 
-"لقد أضفت 30 كرت لكل من LANTERN_CARDS و FIRMAN_CARDS. أريد منك الآن التأكد من أن دالة معالجة الكروت في game.js تدعم الحالات التالية:
+### ✅ Completed Steps
+- [x] Analyze project files (index.html, screens JS, CSS, app.js, config.js)
+- [x] Create detailed edit plan
+- [x] User approved plan
+- [x] Create TODO.md tracker
 
-type: 'pay_all': أن يقوم اللاعب الحالي بدفع المبلغ المحدد لكل اللاعبين الآخرين.
+### ⏳ Pending Steps (4/8)
+1. ~~Rewrite index.html: Remove Monopoly extras, add CSS link, keep #app + screen scripts~~
+2. Verify/update CSS for screen classes
+3. Test screen navigation (language → gamemode → newgame)
+4. Add game screen stub / integrate Monopoly to newgame "START"
+5. Demo with `open index.html`
+6. Update TODO.md on completion
+7. attempt_completion
 
-type: 'repair': حساب الضريبة بناءً على عدد المباني (Houses/Hotels) التي يملكها اللاعب.
-
-steps: -3: تحريك البيدق للخلف بدلاً من الأمام.
-
-type: 'skip': تخطي دور اللاعب القادم وتفعيل علامة (Disabled) عليه.
-
-type: 'jailfree': تخزين البطاقة في حقيبة اللاعب ليستخدمها لاحقاً."
-// ═══════════════════════════════════════════
-
-
-// ═══════════════════════════════════════════
-💡 ماذا ترسل لـ Claude الآن؟
-انسخ له الكود الذي أرسلتُه أنت، وقل له:
-
-"هذا هو ملف الـ Logic الخاص بلعبتي. أريد منك إكمال دالتي drawLanternCard و drawFirmanCard لكي تدعم كل أنواع الكروت التي أضفناها في config.js (مثل pay_all, gain_all, steps, jail, skip). وأيضاً تأكد من ربط تحديث المال مع واجهة المستخدم (UI) بشكل صحيح."
-// ═══════════════════════════════════════════
+Next action: Edit index.html
