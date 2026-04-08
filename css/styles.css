@@ -22,12 +22,7 @@
 /* 6. Modals & Effects (animations last) */
 @import url('./modals.css');
 
-@import url('./_variables.css');
-@import url('./_reset.css');
-@import url('./board.css');
-@import url('./panels.css');
-@import url('./buttons.css');
-@import url('./modals.css');
+
 
 /* ═══════════════════════════════════════════
    نهاية - اللعبة جاهزة للتحميل
