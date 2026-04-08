@@ -1,34 +1,16 @@
 /* ═══════════════════════════════════════════
-   styles.css - الملف الرئيسي (CSS Hub)
-   يستورد جميع الملفات الفرعية بترتيب منطقي
-   استخدم <link rel="stylesheet" href="css/styles.css"> في HTML
+   styles.css — CSS Hub (Master Import)
+   جميع الملفات في مكان واحد للتحميل
 ═══════════════════════════════════════════ */
 
-/* 1. Variables first (required by all) */
-@import url('./_variables.css');
+/* 1. BASE */
+@import '_variables.css';
+@import '_reset.css';
 
-/* 2. Reset & Base */
-@import url('./_reset.css');
+/* 2. PRE-GAME SCREENS */
+@import 'screens.css';
 
-/* 3. Layout & Board */
-@import url('./board.css');
+/* 3. GAME UI (Monopoly) */
+@import 'game-ui.css';
 
-/* 4. Panels & HUD */
-@import url('./panels.css');
-
-/* 5. Buttons & Controls */
-@import url('./buttons.css');
-
-/* 6. Modals & Effects (animations last) */
-@import url('./modals.css');
-
-
-
-/* ═══════════════════════════════════════════
-   نهاية - اللعبة جاهزة للتحميل
-   
-   ✅ 600 سطر → 6 ملفات (100 سطر/ملف)
-   ✅ لا تكرارات (boardGlow, statPill موحدة)
-   ✅ تعليقات واضحة لكل قسم
-   ✅ @import cascade للأداء الأمثل
-═══════════════════════════════════════════ */
+/* ═══ END ═══ */

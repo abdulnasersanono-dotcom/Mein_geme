@@ -1,0 +1,76 @@
+/* ═══════════════════════════════════════════
+   game-ui.css — Monopoly Game UI فقط
+   لوحة + أزرار + ألواح + dice + modals
+   @import '_variables.css'; @import '_reset.css';
+═══════════════════════════════════════════ */
+
+/* ═══ GAME ROOT ═══ */
+@import '_variables.css';
+
+/* ═══ GAME ROOT ═══ */
+#gameUI {
+  position: fixed; inset: 0; z-index: 10;
+  pointer-events: none;
+}
+
+/* ═══ BOARD ═══ */
+@import 'board.css';
+
+/* ═══ PANELS ═══ */
+@import 'panels.css';
+
+/* ═══ BUTTONS ═══ */
+@import 'buttons.css';
+
+/* ═══ MODALS ═══ */
+@import 'modals.css';
+
+/* ═══ ADDITIONAL GAME ELEMENTS ═══ */
+#actionZone {
+  position: fixed;
+  right: calc(var(--safe-r) + var(--space-sm));
+  bottom: calc(var(--safe-b) + var(--space-md));
+  z-index: 80; pointer-events: all;
+  display: flex; flex-direction: column;
+  align-items: flex-end; gap: var(--space-sm);
+}
+
+#leftActions {
+  position: fixed;
+  left: calc(var(--safe-l) + 170px);
+  bottom: calc(var(--safe-b) + var(--space-md));
+  z-index: 80; pointer-events: all;
+  display: flex; flex-direction: column;
+  gap: var(--space-sm); align-items: flex-start;
+}
+
+/* ═══ PARTICLES & EFFECTS ═══ */
+#pCv, #starCv {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+#camFlash {
+  position: fixed; inset: 0; z-index: 195; pointer-events: none;
+  background: rgba(0,0,0,0); transition: background .3s;
+}
+#camFlash.on { background: rgba(0,0,0,.35); }
+
+#gameBg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 60%, rgba(40,18,0,.6), transparent 65%),
+    radial-gradient(ellipse at 50% 50%, #130800, #060300);
+}
+
+/* ═══ TOAST ═══ */
+.gameToast {
+  position: fixed; bottom: calc(var(--safe-b) + 90px); left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(10,5,0,.92); backdrop-filter: blur(14px);
+  border: 1px solid rgba(200,150,20,.45); border-radius: var(--radius-lg);
+  color: var(--color-gold); font-size: 12px; padding: var(--space-md) var(--space-xl);
+  z-index: 500; pointer-events: none; letter-spacing: .5px;
+  opacity: 0; transition: opacity .3s, transform .3s; white-space: nowrap;
+}
+.gameToast.show {
+  opacity: 1; transform: translateX(-50%) translateY(0);
+}

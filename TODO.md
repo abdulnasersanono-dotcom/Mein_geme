@@ -1,18 +1,33 @@
-## Progress Tracker for Pre-Game Screens Fix
+## تقرير التقدم: إصلاح شاشات ما قبل اللعبة
 
-### ✅ Completed Steps
-- [x] Analyze project files (index.html, screens JS, CSS, app.js, config.js)
-- [x] Create detailed edit plan
-- [x] User approved plan
-- [x] Create TODO.md tracker
+### ✅ الخطوات المكتملة
+- [x] تحليل ملفات المشروع (index.html، شاشات JS، CSS، app.js، config.js)
+- [x] إنشاء خطة التعديل التفصيلية  
+- [x] موافقة المستخدم على الخطة
+- [x] إنشاء TODO.md
 
-### ⏳ Pending Steps (4/8)
-1. ~~Rewrite index.html: Remove Monopoly extras, add CSS link, keep #app + screen scripts~~
-2. Verify/update CSS for screen classes
-3. Test screen navigation (language → gamemode → newgame)
-4. Add game screen stub / integrate Monopoly to newgame "START"
-5. Demo with `open index.html`
-6. Update TODO.md on completion
-7. attempt_completion
+### ✅ الخطوات المكتملة
+- [x] تحليل ملفات المشروع (index.html، شاشات JS، CSS، app.js، config.js)
+- [x] إنشاء خطة التعديل التفصيلية  
+- [x] موافقة المستخدم على الخطة
+- [x] إنشاء TODO.md
+- [x] **إعادة كتابة index.html**: إزالة محتويات لعبة Monopoly الزائدة، إضافة رابط CSS، الاحتفاظ بـ #app + سكريبتات الشاشات
 
-Next action: Edit index.html
+### ✅ الخطوات المكتملة
+- [x] تحليل ملفات المشروع (index.html، شاشات JS، CSS، app.js، config.js)
+- [x] إنشاء خطة التعديل التفصيلية  
+- [x] موافقة المستخدم على الخطة
+- [x] إنشاء TODO.md
+- [x] **إعادة كتابة index.html**: إزالة محتويات لعبة Monopoly الزائدة، إضافة رابط CSS، الاحتفاظ بـ #app + سكريبتات الشاشات
+- [x] التحقق/تحديث CSS لفئات شاشات screens.css  
+- [x] اختبار تنقل الشاشات (language → gamemode → newgame)
+
+### ⏳ الخطوات المعلقة (0/3)
+1. إضافة واجهة لعبة stub / دمج Monopoly في زر \"ابدأ\" في newgame
+2. عرض تجريبي بـ `open index.html`
+3. تحديث TODO.md عند الانتهاء
+4. attempt_completion
+
+**الخطوة التالية**: دمج Monopoly في زر \"ابدأ\"
+
+

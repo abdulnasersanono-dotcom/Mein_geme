@@ -1,0 +1,446 @@
+@import '_variables.css';
+
+/* ═══ PRE-GAME SCREENS ONLY ═══ */
+/* ─── APP CONTAINER ─────────────────────────────────────────── */
+#app { 
+  position: fixed; 
+  inset: 0; 
+  overflow: hidden; 
+  z-index: 1000;
+}
+
+/* ─── SCREEN BASE ───────────────────────────────────────────── */
+.screen {
+  position: absolute; 
+  inset: 0;
+  display: flex; 
+  flex-direction: column;
+  background: radial-gradient(ellipse 80% 60% at 50% 40%, #1c0e00 0%, #0a0500 55%, #040200 100%);
+  opacity: 0; 
+  transition: opacity .35s ease;
+  pointer-events: none;
+}
+.screen.active { 
+  opacity: 1; 
+  pointer-events: all; 
+}
+
+/* ─── GOLD DIVIDER ──────────────────────────────────────────── */
+.gold-divider { 
+  height: 1.5px; 
+  background: linear-gradient(90deg, transparent, #C4A030 20%, #FFD060 50%, #C4A030 80%, transparent); 
+  border: none; 
+  margin: 4px 0; 
+}
+
+/* ─── SECTION LABEL ─────────────────────────────────────────── */
+.section-label { 
+  font-size: 10px; 
+  font-weight: 700; 
+  color: rgba(200,160,40,.80); 
+  letter-spacing: 1.5px; 
+  text-transform: uppercase; 
+  margin-bottom: 6px; 
+}
+
+/* ─── GLASS PANEL ───────────────────────────────────────────── */
+.glass-panel { 
+  background: rgba(255,255,255,.04); 
+  border: 1px solid rgba(200,150,20,.22); 
+  border-radius: 14px; 
+  padding: 14px 16px; 
+}
+
+/* ═══ SCREEN 1 - LANGUAGE ═══ */
+#screen-language { 
+  align-items: center; 
+  justify-content: center; 
+  gap: 16px; 
+}
+
+.lang-header { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 4px; 
+}
+
+.lang-camel { 
+  font-size: 42px; 
+  line-height: 1; 
+}
+
+.lang-title { 
+  font-size: 34px; 
+  font-weight: 900; 
+  color: #FFD060; 
+  text-shadow: 0 0 20px rgba(255,200,0,.7); 
+}
+
+.lang-prompt { 
+  font-size: 11px; 
+  color: rgba(200,160,40,.60); 
+  letter-spacing: .5px; 
+  text-align: center; 
+}
+
+.lang-grid { 
+  display: grid; 
+  grid-template-columns: repeat(4, 1fr); 
+  gap: 10px; 
+  padding: 0 32px; 
+  width: 100%; 
+  max-width: 900px; 
+}
+
+.lang-btn { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  padding: 9px 16px; 
+  background: rgba(255,255,255,.055); 
+  border: 1px solid rgba(200,150,20,.32); 
+  border-radius: 13px; 
+  cursor: pointer; 
+  transition: background .15s, border-color .15s, transform .12s, box-shadow .15s; 
+  box-shadow: inset 0 1px 0 rgba(255,220,100,.07), 0 3px 8px rgba(0,0,0,.4); 
+  outline: none; 
+}
+
+.lang-btn .flag { 
+  font-size: 20px; 
+  line-height: 1; 
+  flex-shrink: 0; 
+}
+
+.lang-btn .lname { 
+  font-size: 13px; 
+  font-weight: 700; 
+  color: rgba(220,180,60,.9); 
+  font-family: 'Georgia', serif; 
+}
+
+.lang-btn:hover {
+  background: rgba(255,255,255,.095);
+  border-color: rgba(200,150,20,.45);
+  transform: translateY(-1px);
+}
+
+.lang-btn:active {
+  transform: translateY(0);
+}
+
+.lang-btn.selected { 
+  background: linear-gradient(145deg, #FFD060, #C89010); 
+  border-color: #FFD060; 
+  box-shadow: 0 0 20px rgba(255,200,0,.45); 
+}
+
+.lang-btn.selected .lname { 
+  color: #3a1800; 
+}
+
+/* ═══ SCREEN 2 - GAME MODE ═══ */
+#screen-gamemode { 
+  flex-direction: row; 
+  align-items: stretch; 
+}
+
+.deco-side { 
+  width: 120px; 
+  flex-shrink: 0; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 18px; 
+  opacity: .18; 
+}
+
+.deco-icon {
+  font-size: 48px;
+}
+
+.deco-dots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.deco-dot {
+  font-size: 10px;
+  opacity: .6;
+  animation: decoPulse 2s ease-in-out infinite;
+}
+
+@keyframes decoPulse {
+  0%, 100% { opacity: .6; }
+  50% { opacity: .3; }
+}
+
+.mode-center { 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 10px; 
+  padding: 14px 32px; 
+}
+
+.mode-logo-emoji { 
+  font-size: 50px; 
+  line-height: 1; 
+}
+
+.mode-logo-title { 
+  font-size: 40px; 
+  font-weight: 900; 
+  color: #FFD060; 
+  text-shadow: 0 0 24px rgba(255,200,0,.75); 
+  line-height: 1; 
+}
+
+.mode-logo-sub { 
+  font-size: 16px; 
+  color: rgba(255,220,100,.75); 
+  letter-spacing: 2px; 
+}
+
+.mode-btn-stack { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 11px; 
+  width: 100%; 
+  max-width: 320px; 
+  margin-top: 6px; 
+}
+
+/* ═══ SCREEN 3 - NEW GAME ═══ */
+#screen-newgame { }
+
+.ng-header { 
+  display: flex; 
+  align-items: center; 
+  padding: 9px 18px; 
+  gap: 14px; 
+  background: linear-gradient(180deg, rgba(10,5,0,.85), rgba(10,5,0,.55)); 
+  border-bottom: 1px solid rgba(200,150,20,.20); 
+  flex-shrink: 0; 
+}
+
+.ng-back-btn {
+  padding: 6px 10px;
+}
+
+.ng-header-title { 
+  flex: 1; 
+  text-align: center; 
+  font-size: 20px; 
+  font-weight: 900; 
+  color: #FFD060; 
+}
+
+.ng-version {
+  font-size: 11px;
+  opacity: .6;
+}
+
+.ng-body { 
+  flex: 1; 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 14px; 
+  padding: 12px 18px; 
+  overflow: hidden; 
+}
+
+.ng-col { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+  background: rgba(255,255,255,.035); 
+  border: 1px solid rgba(200,150,20,.18); 
+  border-radius: 14px; 
+  padding: 14px 16px; 
+  overflow-y: auto; 
+}
+
+.player-count-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.count-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 2px solid rgba(200,150,20,.4);
+  background: rgba(255,255,255,.08);
+  font-size: 16px;
+  font-weight: 900;
+  color: #FFD060;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.count-btn.active,
+.count-btn:hover {
+  background: linear-gradient(145deg, #FFD060, #C89010);
+  border-color: #FFD060;
+  color: #3a1800;
+  box-shadow: 0 4px 12px rgba(255,200,0,.3);
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.slider-value {
+  font-family: 'Courier New', monospace;
+  font-weight: 900;
+  color: #FFD060;
+  min-width: 68px;
+  text-align: right;
+}
+
+.game-input {
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(200,150,20,.35);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #F5ECD5;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.game-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(255,208,96,.25);
+}
+
+.rule-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.toggle-pill {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.12);
+  border-radius: 10px;
+  border: 1px solid rgba(200,150,20,.3);
+  transition: background .2s;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #F5ECD5;
+  border-radius: 50%;
+  transition: transform .2s, box-shadow .2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,.3);
+}
+
+.toggle-pill input:checked + .toggle-track {
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+}
+
+.toggle-pill input:checked + .toggle-track + .toggle-thumb {
+  transform: translateX(16px);
+}
+
+.rule-label {
+  flex: 1;
+  font-size: 11px;
+  color: rgba(200,160,40,.85);
+  line-height: 1.3;
+}
+
+.ng-footer { 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 16px; 
+  padding: 10px 24px; 
+  background: linear-gradient(0deg, rgba(10,5,0,.88), rgba(10,5,0,.55)); 
+  border-top: 1px solid rgba(200,150,20,.20); 
+  flex-shrink: 0; 
+}
+
+.resume-btn, .start-btn {
+  flex: 1;
+  max-width: 160px;
+}
+
+.btn-green {
+  background: linear-gradient(145deg, #1a5a2a, #40cc40);
+}
+
+.btn-ghost {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(200,150,20,.35);
+  color: rgba(220,180,60,.9);
+}
+
+/* ═══════════════════════════════════════════
+   Button 3D effect (shared across screens)
+═══════════════════════════════════════════ */
+.btn-3d {
+  position: relative;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .12s, box-shadow .15s;
+  text-shadow: 0 1px 2px rgba(0,0,0,.4);
+  overflow: hidden;
+}
+
+.btn-3d::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.25) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity .2s;
+}
+
+.btn-3d:hover::before {
+  opacity: 1;
+}
+
+.btn-3d:active {
+  transform: translateY(2px);
+}
+
+.btn-blue {
+  background: linear-gradient(145deg, #1a4080, #4080ff);
+  color: #E8F4FF;
+  box-shadow: 0 4px 0 #1a3060, 0 8px 20px rgba(0,0,0,.4);
+}
+
+.btn-red {
+  background: linear-gradient(145deg, #801010, #ff4040);
+  color: #FFE8E8;
+  box-shadow: 0 4px 0 #601010, 0 8px 20px rgba(0,0,0,.4);
+}
+
