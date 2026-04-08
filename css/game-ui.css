@@ -5,25 +5,14 @@
 ═══════════════════════════════════════════ */
 
 /* ═══ GAME ROOT ═══ */
-@import '_variables.css';
-
-/* ═══ GAME ROOT ═══ */
 #gameUI {
+
   position: fixed; inset: 0; z-index: 10;
   pointer-events: none;
 }
 
-/* ═══ BOARD ═══ */
-@import 'board.css';
+/* No nested imports - all handled by styles.css */
 
-/* ═══ PANELS ═══ */
-@import 'panels.css';
-
-/* ═══ BUTTONS ═══ */
-@import 'buttons.css';
-
-/* ═══ MODALS ═══ */
-@import 'modals.css';
 
 /* ═══ ADDITIONAL GAME ELEMENTS ═══ */
 #actionZone {

@@ -9,7 +9,8 @@
      Footer  — Resume + Start Game
 ═══════════════════════════════════════════════════════════════ */
 
-const NewGameScreen = (() => {
+window.NewGameScreen = (() => {
+
 
   /* ── Rule definitions ───────────────────────────────────────── */
   const RULES = [

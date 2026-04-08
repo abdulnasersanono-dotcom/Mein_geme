@@ -5,7 +5,8 @@
    Left / Right decorative panels flank the center.
 ═══════════════════════════════════════════════════════════════ */
 
-const GameModeScreen = (() => {
+window.GameModeScreen = (() => {
+
 
   /* ── Build HTML ─────────────────────────────────────────────── */
   function render(nav) {

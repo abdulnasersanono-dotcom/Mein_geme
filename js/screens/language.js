@@ -5,7 +5,8 @@
    On selection → saves to nav.state → transitions to Screen 2.
 ═══════════════════════════════════════════════════════════════ */
 
-const LanguageScreen = (() => {
+window.LanguageScreen = (() => {
+
 
   const LANGUAGES = [
     { flag: '🇸🇦', name: 'العربية',   code: 'ar' },
