@@ -10,12 +10,13 @@
 'use strict';
 
  /* ── SCREEN REGISTRY ─────────────────────────────────────────── */
- const SCREENS = {
-  language: LanguageScreen,
-  gamemode: GameModeScreen,
-  newgame:  NewGameScreen,
-  // game: GameScreen,  // load when needed
+const SCREENS = {
+  language: window.LanguageScreen,
+  gamemode: window.GameModeScreen,
+  newgame: window.NewGameScreen,
+  game: window.GameScreen
 };
+
 
 /* ── NAVIGATOR ───────────────────────────────────────────────── */
 const nav = {

@@ -5,7 +5,8 @@
    Receives nav.state from newgame screen.
 ═══════════════════════════════════════════════════════════════ */
 
-const GameScreen = (() => {
+window.GameScreen = (() => {
+
 
   /* ── Init game from nav.state ────────────────────────────── */
 function init(nav) {
