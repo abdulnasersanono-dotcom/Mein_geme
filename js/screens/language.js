@@ -5,8 +5,9 @@
    On selection → saves to nav.state → transitions to Screen 2.
 ═══════════════════════════════════════════════════════════════ */
 
-window.LanguageScreen = (() => {
 
+
+window.LanguageScreen = (() => {
 
   const LANGUAGES = [
     { flag: '🇸🇦', name: 'العربية',   code: 'ar' },
@@ -14,16 +15,8 @@ window.LanguageScreen = (() => {
     { flag: '🇫🇷', name: 'Français',  code: 'fr' },
     { flag: '🇪🇸', name: 'Español',   code: 'es' },
     { flag: '🇩🇪', name: 'Deutsch',   code: 'de' },
-    { flag: '🇹🇷', name: 'Türkçe',    code: 'tr' },
-    { flag: '🇮🇹', name: 'Italiano',  code: 'it' },
-    { flag: '🇧🇷', name: 'Português', code: 'pt' },
-    { flag: '🇷🇺', name: 'Русский',   code: 'ru' },
-    { flag: '🇯🇵', name: '日本語',    code: 'ja' },
-    { flag: '🇨🇳', name: '中文',      code: 'zh' },
-    { flag: '🇰🇷', name: '한국어',    code: 'ko' },
   ];
 
-  /* ── Build HTML ─────────────────────────────────────────────── */
   function render(nav) {
     const btnsHTML = LANGUAGES.map(l => `
       <button
@@ -38,47 +31,55 @@ window.LanguageScreen = (() => {
 
     return `
       <div id="screen-language" class="screen">
-
         <div class="lang-header">
           <div class="lang-camel">🐪</div>
-          <div class="lang-title">SILK ROAD</div>
-          <div class="lang-prompt">
-            Choose Your Language &nbsp;·&nbsp; اختر لغتك &nbsp;·&nbsp; Choisissez votre langue
+          <div class="lang-title" data-i18n="languageScreen.title">GAME</div>
+          <div class="lang-prompt" data-i18n="languageScreen.prompt">
+            Choose Your Language
           </div>
         </div>
-
         <div class="lang-grid">
           ${btnsHTML}
         </div>
-
       </div>
     `;
   }
 
-  /* ── Wire events after HTML is in DOM ──────────────────────── */
   function init(nav) {
     const screen = document.getElementById('screen-language');
+    const savedLanguage = localStorage.getItem('selectedLanguage') || 'en';
 
     screen.querySelectorAll('.lang-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const code = btn.dataset.code;
+      const code = btn.dataset.code;
 
-        /* Visual feedback */
+      if (code === savedLanguage) {
+        btn.classList.add('selected');
+      }
+
+      btn.addEventListener('click', async () => {
         screen.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
+        btn.style.animation = 'pulse 0.6s ease';
 
-        /* Save state */
-        nav.state.language = code;
+        const loaded = await i18n.loadLanguage(code);
 
-        /* Brief delay so the user sees the highlight, then navigate */
-        setTimeout(() => nav.goTo('gamemode'), 320);
+        if (loaded) {
+          nav.state.language = code;
+          i18n.translatePageElements();
+
+          setTimeout(() => {
+            nav.goTo('gamemode');  // أو الشاشة التالية
+          }, 400);
+        }
       });
     });
 
-    /* Activate (fade-in) */
+    i18n.translatePageElements();
     requestAnimationFrame(() => screen.classList.add('active'));
   }
 
-  return { render, init };
-
+  return { render, init, LANGUAGES };
 })();
+
+
+// 

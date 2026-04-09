@@ -4,25 +4,31 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <title>درب الحرير 🐪</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="./css/i18n.css">
 </head>
+
+
 <body>
   <div id="app"></div>
 
   <!-- Screen Scripts -->
-<script src="js/screens/language.js" type="module"></script>
-  <script src="js/screens/gamemode.js" type="module"></script>
-  <script src="js/screens/newgame.js" type="module"></script>
-  <script src="js/screens/game.js" type="module"></script>
-  <script src="js/app.js" type="module"></script>
+<script src="js/system/i18n.js" type="module"></script>
+    <script src="js/system/navigation.js" type="module"></script>
+
+    <script src="js/screens/language.js" type="module"></script>
+    <script src="js/screens/gamemode.js" type="module"></script>
+    <script src="js/screens/newgame.js" type="module"></script>
+    <script src="js/screens/game.js" type="module"></script>
+
+    <script src="js/app.js" type="module"></script>
+
+    <script src="js/main.js" type="module"></script>
+
 </body>
 </html>
+LEFT ANCHOR — Vertical Player List
+Anchor: left=0, top=0, bottom=0
 
-
-/* ═══════════════════════════════════════════
-   LEFT ANCHOR — Vertical Player List
-   Anchor: left=0, top=0, bottom=0
-═══════════════════════════════════════════ */
 #leftPanel{
   position:fixed;
   left:calc(var(--safe-l));

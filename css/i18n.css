@@ -1,0 +1,145 @@
+/*
+/* اختيار اللغة - التصاميس الأساسية */
+
+.lang-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  animation: slideDown 0.8s ease;
+}
+
+.lang-camel {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  display: inline-block;
+  animation: bounce 1s ease-in-out;
+}
+
+.lang-title {
+  font-size: 3.5rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 3px;
+  margin-bottom: 1rem;
+}
+
+.lang-prompt {
+  font-size: 1rem;
+  color: #ffe66d;
+  opacity: 0.9;
+  line-height: 1.8;
+}
+
+.lang-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1.5rem;
+  max-width: 1000px;
+  width: 100%;
+  padding: 1.5rem;
+}
+
+.lang-btn {
+  aspect-ratio: 1;
+  background: rgba(255, 107, 107, 0.1);
+  border: 2px solid rgba(22, 33, 62, 0.5);
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #eaeaea;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+
+.lang-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  transition: left 0.2s ease;
+  pointer-events: none;
+}
+
+.lang-btn:hover {
+  border-color: #4ecdc4;
+  background: rgba(255, 107, 107, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.lang-btn:hover::before {
+  left: 100%;
+}
+
+.lang-btn.selected {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.3);
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+  transform: scale(1.05);
+}
+
+.lang-btn .flag {
+  font-size: 2rem;
+  display: block;
+}
+
+.lang-btn .lname {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* دعم RTL */
+body.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+body.ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+/* الحركات */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
