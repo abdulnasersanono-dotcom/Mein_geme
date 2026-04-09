@@ -21,4 +21,3 @@ window.CONFIG = {
   
   // Add other shared constants here
 };
-
