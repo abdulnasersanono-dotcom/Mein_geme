@@ -13,6 +13,26 @@
    يتم استيراد كل شيء هنا وتشغيل اللعبة
 ═══════════════════════════════════════════ */
 
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('🚀 جاري تشغيل اللعبة...');
+
+  // تسجيل الشاشات
+  nav.registerScreen('language', window.LanguageScreen);
+  // nav.registerScreen('gamemode', window.GameModeScreen);
+  // nav.registerScreen('game', window.GameScreen);
+
+  // تحميل اللغة المحفوظة أو الافتراضية
+  const savedLang = localStorage.getItem('selectedLanguage') || 'en';
+  await i18n.loadLanguage(savedLang);
+
+  // الانتقال إلى شاشة اختيار اللغة
+  nav.goTo('language');
+
+  console.log('✅ تم تحميل اللعبة بنجاح!');
+  console.log(`📝 اللغة الحالية: ${i18n.getCurrentLanguage()}`);
+});
+
+
 import {
   BOARD_DATA, GROUPS, LANTERN_CARDS, FIRMAN_CARDS,
   PLAYER_COLORS, PLAYER_EMOJIS
