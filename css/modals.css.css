@@ -1,0 +1,100 @@
+/* ═══════════════════════════════════════════
+   MODAL SYSTEM (shared structure)
+═══════════════════════════════════════════ */
+.modalOv{
+  position:fixed;inset:0;z-index:600;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.65);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  pointer-events:none;opacity:0;transition:opacity .25s;
+}
+.modalOv.open{pointer-events:all;opacity:1;}
+.modalBox{
+  background:#FAF2DC;border-radius:18px;overflow:hidden;
+  box-shadow:0 24px 70px rgba(0,0,0,.85),0 0 0 1px rgba(180,130,20,.3);
+  width:calc(100% - 32px);
+  transform:scale(.92);transition:transform .3s cubic-bezier(.34,1.2,.64,1);
+}
+.modalOv.open .modalBox{transform:scale(1);}
+.modalHead{padding:18px 20px 14px;text-align:center;}
+.modalTitle{font-size:17px;font-weight:900;color:#fff;letter-spacing:.5px;}
+.modalSub{font-size:10px;color:rgba(255,255,255,.6);letter-spacing:1.5px;margin-top:3px;}
+.modalBody{padding:14px 16px 16px;background:#FAF2DC;}
+
+/* ═══════════════════════════════════════════
+   SETUP MODAL specific
+═══════════════════════════════════════════ */
+.setupCountRow{display:flex;align-items:center;justify-content:space-between;
+  background:rgba(180,130,0,.08);border-radius:10px;padding:8px 14px;margin-bottom:10px;
+  font-size:13px;color:#3a2000;}
+.countBtn{background:linear-gradient(145deg,#8B5E00,#C89010);border:none;border-radius:8px;
+  width:30px;height:30px;color:#fff;font-size:16px;font-weight:900;cursor:pointer;}
+.setupPlayer{display:flex;align-items:center;gap:8px;padding:7px 0;
+  border-bottom:1px solid rgba(180,130,0,.12);}
+.spEmoji{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.spName{flex:1;font-size:12px;color:#3a2000;}
+.spTypeBtn{background:rgba(100,70,0,.15);border:1px solid rgba(180,130,0,.3);border-radius:8px;
+  padding:4px 10px;font-size:10px;color:#6a4a10;cursor:pointer;}
+.spTypeBtn.human{background:rgba(0,80,20,.15);border-color:rgba(0,150,40,.4);color:#1a5a10;}
+
+/* ═══════════════════════════════════════════
+   BUY MODAL specific
+═══════════════════════════════════════════ */
+.buyInfoRow{display:flex;justify-content:space-between;margin-top:10px;
+  background:rgba(180,130,0,.08);border-radius:8px;padding:8px 12px;font-size:11px;color:#3a2000;}
+
+/* ═══════════════════════════════════════════
+   AUCTION MODAL specific
+═══════════════════════════════════════════ */
+.aucBidRow{display:flex;justify-content:space-between;align-items:center;
+  padding:6px 0;border-bottom:1px solid rgba(180,130,0,.1);font-size:12px;color:#3a2000;}
+.aucBidAmt{font-family:'Courier New',monospace;font-weight:900;color:var(--gold-dark);}
+
+/* ═══════════════════════════════════════════
+   MORTGAGE MODAL specific
+═══════════════════════════════════════════ */
+.mgRow{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(180,130,0,.1);}
+.mgColor{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+.mgName{flex:1;font-size:11px;color:#3a2000;}
+.mgMoney{font-size:10px;color:var(--gold-dark);font-family:monospace;}
+.mgBtn{background:rgba(180,130,0,.15);border:1px solid rgba(180,130,0,.3);border-radius:6px;
+  padding:3px 9px;font-size:10px;color:#5a3a10;cursor:pointer;}
+.mgBtn.unmg{background:rgba(0,80,20,.15);border-color:rgba(0,150,40,.4);color:#1a5a10;}
+
+/* ═══════════════════════════════════════════
+   BUILD MODAL specific
+═══════════════════════════════════════════ */
+.buildRow{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(180,130,0,.1);}
+.buildColor{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+.buildName{flex:1;font-size:11px;color:#3a2000;}
+.buildHouses{font-size:13px;}
+.buildActions{display:flex;gap:4px;}
+.buildBuyBtn{background:rgba(0,100,0,.15);border:1px solid rgba(0,150,40,.3);border-radius:6px;padding:3px 7px;font-size:9px;color:#1a5a10;cursor:pointer;}
+.buildSellBtn{background:rgba(180,0,0,.1);border:1px solid rgba(180,0,0,.25);border-radius:6px;padding:3px 7px;font-size:9px;color:#7a1010;cursor:pointer;}
+
+/* ═══════════════════════════════════════════
+   TRADE MODAL specific
+═══════════════════════════════════════════ */
+.tradePlayerLabel{font-size:11px;font-weight:900;color:#3a2000;margin-bottom:6px;text-align:center;}
+.tradePropList{display:flex;flex-wrap:wrap;gap:4px;min-height:40px;}
+.tradeProp{border:2px solid;border-radius:7px;padding:3px 6px;cursor:pointer;font-size:10px;
+  background:rgba(255,255,255,.6);transition:background .15s;}
+.tradeProp.sel{background:rgba(255,200,0,.25);}
+
+/* ═══════════════════════════════════════════
+   SHARED BUTTON STYLES (used across modals)
+═══════════════════════════════════════════ */
+.goldBtn{
+  background:linear-gradient(145deg,#8B5E00,#C89010,#FFD060,#C89010,#8B5E00);
+  border:none;border-radius:11px;padding:10px 20px;
+  color:#3a1800;font-size:13px;font-weight:900;cursor:pointer;
+  box-shadow:0 4px 0 #5A3800,inset 0 1px 0 rgba(255,255,200,.3);}
+.goldBtn:active{transform:translateY(3px);}
+.grayBtn{background:rgba(100,70,0,.15);border:1px solid rgba(180,130,0,.3);border-radius:11px;
+  padding:10px 20px;font-size:13px;color:#5a3a10;cursor:pointer;}
+.redBtn{background:rgba(180,0,0,.15);border:1px solid rgba(180,0,0,.3);border-radius:11px;
+  padding:10px 20px;font-size:13px;color:#7a1010;cursor:pointer;}
+
+/* Input field */
+.dinInput{background:rgba(255,255,255,.7);border:1px solid rgba(180,130,0,.35);border-radius:8px;
+  padding:7px 10px;font-size:12px;color:#3a2000;font-family:'Courier New',monospace;outline:none;}
+.dinInput:focus{border-color:var(--gold-dark);}

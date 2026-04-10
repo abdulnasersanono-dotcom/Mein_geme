@@ -1,0 +1,20 @@
+/* ═══════════════════════════════════════════
+   CSS CUSTOM PROPERTIES — Design Tokens
+   تغيير أي لون أو قيمة هنا يؤثر على كل الواجهة
+═══════════════════════════════════════════ */
+:root{
+  --gold:       #FFD060;
+  --gold-dark:  #C89010;
+  --gold-deep:  #8B5E00;
+  --amber:      #FF8C00;
+  --crimson:    #CC2000;
+  --ivory:      #F5ECD5;
+  --ivory-dark: #E2D0AA;
+  --bg:         #0a0600;
+  --panel:      rgba(15,8,0,0.88);
+  --panel-bdr:  rgba(200,150,20,0.38);
+  --safe-t:     env(safe-area-inset-top,0px);
+  --safe-b:     env(safe-area-inset-bottom,0px);
+  --safe-l:     env(safe-area-inset-left,0px);
+  --safe-r:     env(safe-area-inset-right,0px);
+}

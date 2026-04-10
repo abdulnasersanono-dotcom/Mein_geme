@@ -1,0 +1,38 @@
+/* ═══════════════════════════════════════════
+   SCROLL CARD OVERLAY (Lantern & Firman cards)
+═══════════════════════════════════════════ */
+#cardOverlay{
+  position:fixed;inset:0;z-index:300;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;opacity:0;transition:opacity .22s;
+}
+#cardOverlay.open{pointer-events:all;opacity:1;}
+#cardOvBg{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+#scrollCard{
+  position:relative;z-index:2;
+  width:min(320px,55vw);
+  transform:scaleX(0);transform-origin:center;
+  transition:transform .42s cubic-bezier(.34,1.2,.64,1);
+}
+#cardOverlay.open #scrollCard{transform:scaleX(1);}
+#scrollBody{border-radius:12px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.85);}
+.sRoller{height:20px;background:linear-gradient(90deg,#5A3800,#8B6010,#C49020,#FFD060,#C49020,#8B6010,#5A3800);}
+.sParch{background:linear-gradient(180deg,#F5E6C0,#EDD9A0 50%,#F0E0AA);padding:16px 20px 12px;position:relative;}
+.sParch::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(180deg,transparent 0,transparent 21px,rgba(180,130,0,.05) 21px,rgba(180,130,0,.05) 22px);}
+.sHead{text-align:center;margin-bottom:10px;position:relative;}
+.sIcoEl{font-size:30px;display:block;margin-bottom:4px;}
+.sTypEl{font-size:7.5px;letter-spacing:4px;color:#8a6010;text-transform:uppercase;}
+.sTitEl{font-size:17px;font-weight:900;color:#2a1000;}
+.sDivEl{text-align:center;font-size:11px;color:#C89010;margin:5px 0;letter-spacing:4px;opacity:.65;}
+.sTxtEl{font-size:12.5px;color:#3a2000;line-height:1.75;text-align:center;position:relative;z-index:1;min-height:46px;}
+.sCurEl{display:inline-block;width:2px;height:12px;background:#C89010;margin-right:1px;animation:blnk .7s step-end infinite;vertical-align:middle;}
+@keyframes blnk{0%,100%{opacity:1;}50%{opacity:0;}}
+.sRuleEl{margin-top:10px;padding:8px 12px;border-radius:9px;background:rgba(180,130,0,.1);border:1px solid rgba(180,130,0,.22);font-size:11px;color:#6a4800;text-align:center;position:relative;z-index:1;}
+.sFootEl{display:flex;justify-content:center;margin-top:12px;position:relative;z-index:1;}
+.sCloseEl{
+  background:linear-gradient(145deg,#8B5E00,#C89010,#FFD060,#C89010,#8B5E00);
+  border:none;border-radius:11px;padding:8px 24px;
+  color:#3a1800;font-size:12px;font-weight:900;cursor:pointer;
+  box-shadow:0 4px 0 #5A3800,inset 0 1px 0 rgba(255,255,200,.3);
+}
+.sCloseEl:active{transform:translateY(3px);}
