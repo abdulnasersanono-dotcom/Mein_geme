@@ -1,42 +1,43 @@
-/* ═══════════════════════════════════════════════════════════════
-   MAIN — global wiring, button handlers, boot sequence
-   هذا الملف هو نقطة الدخول الوحيدة لتشغيل اللعبة
-   يُحمَّل آخر شيء بعد جميع الملفات الأخرى
-═══════════════════════════════════════════════════════════════ */
 'use strict';
 
-/* ── Button wires (HTML onclick calls these) ────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   main.js — نقطة الدخول الوحيدة
+   يُحمَّل آخر شيء بعد جميع الكلاسات
+   يربط أزرار HTML بالكلاسات المُنشَأة ويُشغِّل اللعبة
+═══════════════════════════════════════════════════════════════ */
 
-/** Called by the dice button */
-function rollDice(){ doRollDice(); }
+/* ── أزرار اللعبة الرئيسية ────────────────────────────────── */
 
-/** Called by secondary action buttons */
-function secAction(t){
-  haptic('light');
-  if(t === 'build') openBuildModal();
-  else if(t === 'trade') openTradeModal();
-  else if(t === 'menu') document.getElementById('setupModal').classList.add('open');
+/** زر رمي النرد — onclick="rollDice()" */
+function rollDice() { turnMgr.rollDice(); }
+
+/** أزرار الإجراءات الثانوية — onclick="secAction('build')" */
+function secAction(type) {
+    fx.haptic('light');
+    if      (type === 'build') actionHandler.openBuildModal();
+    else if (type === 'trade') actionHandler.openTradeModal();
+    else if (type === 'menu')  document.getElementById('setupModal').classList.add('open');
 }
 
-/** Open mortgage/property management from the bottom-left button */
-function showPropSlide(){ openMortgageModal(); }
+/** زر عقاراتي — يفتح نافذة الرهن */
+function showPropSlide() { actionHandler.openMortgageModal(); }
 
-/** Close property slide panel */
-function hidePropSlide(){
-  document.getElementById('mortgageModal').classList.remove('open');
+/** إغلاق نافذة الرهن */
+function hidePropSlide() {
+    document.getElementById('mortgageModal').classList.remove('open');
 }
 
-/* ── endTurn — wired to the countdown timer ─────────────────── */
-// The timer calls window.endTurn() when 45 s expire.
-// We proxy it to the real nextTurn() so the timer has a stable target.
-window.endTurn = function(){
-  stopTimer();
-  enableDiceBtn(false);
-  nextTurn();
+/* ── endTurn — مُسلَّك لمؤقت الدور (effects.js) ────────────
+   يُستدعى تلقائياً عند انتهاء الـ 45 ثانية
+──────────────────────────────────────────────────────────── */
+window.endTurn = function () {
+    fx.stopTimer();
+    hud.enableDiceBtn(false);
+    turnMgr.nextTurn();
 };
 
-/* ── BOOT ───────────────────────────────────────────────────── */
-// Open setup screen on first load
-openSetup();
+/* ── التشغيل الأول ──────────────────────────────────────── */
+// فتح شاشة الإعداد عند أول تحميل
+setupUI.open();
 
 console.log('✅ Silk Road: The Golden Era — loaded');

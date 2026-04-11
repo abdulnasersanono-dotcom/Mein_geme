@@ -1,70 +1,98 @@
-/* ═══════════════════════════════════════════════════════════════
-   SETUP SCREEN — player count & type selection before game
-   يعتمد على: state.js, game/init.js
-═══════════════════════════════════════════════════════════════ */
 'use strict';
 
-let setupPlayerCount = 2;
-// 'human' or 'bot' per slot
-let setupPlayerTypes = ['human','bot','bot','bot','bot','bot'];
+/* ═══════════════════════════════════════════════════════════════
+   كلاس شاشة الإعداد — اختيار عدد اللاعبين وأنواعهم قبل البدء
+   SetupUI Class — player count & type selection before game start
+   يعتمد على: state.js (G, PLAYER_EMOJIS, PLAYER_COLORS),
+              game/init.js (tokenMgr)
+═══════════════════════════════════════════════════════════════ */
+class SetupUI {
 
-/** Open the setup modal */
-function openSetup(){
-  G.phase = 'setup';
-  document.getElementById('setupModal').classList.add('open');
-  renderSetupPlayers();
+    constructor() {
+        // عدد اللاعبين المختار (2–6)
+        this._count = 2;
+
+        // نوع كل لاعب: 'human' أو 'bot'
+        this._types = ['human', 'bot', 'bot', 'bot', 'bot', 'bot'];
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       فتح نافذة الإعداد
+    ══════════════════════════════════════════════════════════ */
+    open() {
+        G.phase = 'setup';
+        document.getElementById('setupModal').classList.add('open');
+        this._render();
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       رسم قائمة اللاعبين داخل النافذة
+    ══════════════════════════════════════════════════════════ */
+    _render() {
+        const list     = document.getElementById('setupPlayerList');
+        list.innerHTML = '';
+
+        for (let i = 0; i < this._count; i++) {
+            const isHuman = this._types[i] === 'human';
+            const div     = document.createElement('div');
+            div.className = 'setupPlayer';
+            div.innerHTML = `
+              <span class="spEmoji" style="background:${PLAYER_COLORS[i]}">${PLAYER_EMOJIS[i]}</span>
+              <span class="spName">لاعب ${i + 1}</span>
+              <button class="spTypeBtn ${isHuman ? 'human' : ''}" onclick="togglePlayerType(${i})">
+                ${isHuman ? '👤 بشري' : '🤖 بوت'}
+              </button>`;
+            list.appendChild(div);
+        }
+
+        document.getElementById('setupCountVal').textContent = this._count;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       تبديل نوع لاعب بين بشري / بوت
+       @param {number} i - فهرس اللاعب
+    ══════════════════════════════════════════════════════════ */
+    toggleType(i) {
+        this._types[i] = this._types[i] === 'human' ? 'bot' : 'human';
+        this._render();
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       تغيير عدد اللاعبين
+       @param {number} delta - +1 أو -1
+    ══════════════════════════════════════════════════════════ */
+    changeCount(delta) {
+        this._count = Math.max(2, Math.min(6, this._count + delta));
+        this._render();
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       بناء مصفوفة اللاعبين وبدء اللعبة
+    ══════════════════════════════════════════════════════════ */
+    startGame() {
+        document.getElementById('setupModal').classList.remove('open');
+
+        const players = [];
+        for (let i = 0; i < this._count; i++) {
+            players.push(G.createPlayer(
+                `لاعب ${i + 1}`,
+                PLAYER_EMOJIS[i],
+                PLAYER_COLORS[i],
+                this._types[i] === 'bot'
+            ));
+        }
+
+        tokenMgr.initGame(players);
+    }
 }
 
-/** Render the player list inside the setup modal */
-function renderSetupPlayers(){
-  const list = document.getElementById('setupPlayerList');
-  list.innerHTML = '';
-  for(let i = 0; i < setupPlayerCount; i++){
-    const isHuman = setupPlayerTypes[i] === 'human';
-    const div     = document.createElement('div');
-    div.className = 'setupPlayer';
-    div.innerHTML = `
-      <span class="spEmoji" style="background:${PLAYER_COLORS[i]}">${PLAYER_EMOJIS[i]}</span>
-      <span class="spName">لاعب ${i + 1}</span>
-      <button class="spTypeBtn ${isHuman ? 'human' : ''}" onclick="togglePlayerType(${i})">
-        ${isHuman ? '👤 بشري' : '🤖 بوت'}
-      </button>`;
-    list.appendChild(div);
-  }
-  document.getElementById('setupCountVal').textContent = setupPlayerCount;
-}
+// ═══════════════════════════════════════════════════════════════
+// الإنستانس العالمي
+const setupUI = new SetupUI();
 
-/** Toggle a slot between human / bot */
-function togglePlayerType(i){
-  setupPlayerTypes[i] = setupPlayerTypes[i] === 'human' ? 'bot' : 'human';
-  renderSetupPlayers();
-}
-
-/** Increase or decrease player count */
-function setupCountChange(d){
-  setupPlayerCount = Math.max(2, Math.min(6, setupPlayerCount + d));
-  renderSetupPlayers();
-}
-
-/** Build player array and start the game */
-function startGameFromSetup(){
-  document.getElementById('setupModal').classList.remove('open');
-  const players = [];
-  for(let i = 0; i < setupPlayerCount; i++){
-    players.push({
-      name:       `لاعب ${i + 1}`,
-      emoji:      PLAYER_EMOJIS[i],
-      color:      PLAYER_COLORS[i],
-      money:      1500,
-      sq:         0,
-      props:      [],
-      jailTurns:  0,
-      isBot:      setupPlayerTypes[i] === 'bot',
-      isBankrupt: false,
-      skipTurn:   false,
-      taxFree:    false,
-      active:     true,
-    });
-  }
-  initGame(players);
-}
+// ── دوال تحويل للتوافق مع النداءات الموجودة ──
+function openSetup()              { setupUI.open(); }
+function renderSetupPlayers()     { setupUI._render(); }
+function togglePlayerType(i)      { setupUI.toggleType(i); }
+function setupCountChange(d)      { setupUI.changeCount(d); }
+function startGameFromSetup()     { setupUI.startGame(); }
