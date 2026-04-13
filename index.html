@@ -22,9 +22,7 @@
 <div id="screen-container"></div>
 
 <!-- رقعة اللعبة — مخفية حتى يضغط اللاعب Start -->
-<div id="gameUI" style="display:none;">
-  <!-- محتوى لعبتك الموجود هنا كما هو -->
-</div>
+<!-- div#gameUI الحقيقي موجود أسفل — لا تكرار هنا -->
 <!-- ════════════════════════════════════
      طبقات الخلفية (z-index 0)
 ════════════════════════════════════ -->
@@ -45,7 +43,7 @@
 <!-- ════════════════════════════════════
      واجهة اللعبة الرئيسية
 ════════════════════════════════════ -->
-<div id="gameUI">
+<div id="gameUI" style="display:none;">
 
   <!-- اللوحة (خلفية) -->
   <div id="boardArea">
@@ -385,12 +383,7 @@
 <script src="js/game/actions.js"></script>        <!-- jail, cards, buy, auction, mortgage, build, trade, bankruptcy, gameover -->
 
 
-<!-- 2. بدء التشغيل -->
-<script>
-  const nav = createNavigator();
-  nav.start('language');   // يبدأ من شاشة اللغات
-</script>
-<!-- ⑦ واجهة المستخدم -->
+<!-- ⑦ واجهة المستخدم — بدء التشغيل يأتي بعد تحميل ملفات الشاشات -->
 <script src="js/ui/setup.js"></script>            <!-- openSetup, startGameFromSetup -->
 <script src="js/ui/dice.js"></script>             <!-- showDiceToast, dice canvas -->
 
