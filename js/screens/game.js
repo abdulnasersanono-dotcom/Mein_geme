@@ -19,6 +19,11 @@ window.GameScreen = (() => {
 
     /* إخفاء شاشات الـ Menu وإظهار الـ gameUI */
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+
+    /* إخفاء كونتينر الشاشات كاملاً — يمنع حجب النقرات على الرقعة */
+    const screenContainer = document.getElementById('screen-container');
+    if (screenContainer) screenContainer.style.display = 'none';
+
     const gameUI = document.getElementById('gameUI');
     if (gameUI) gameUI.style.display = 'block';
 
@@ -33,8 +38,13 @@ window.GameScreen = (() => {
 
   /* ── تشغيل اللعبة بعد تحميل المحرك ──────────────────────────── */
   function _launchGame(state) {
-    /* بناء اللاعبين من state.players أو إنشاؤهم من الصفر */
-    const players = state.players ?? _buildPlayers(state);
+    /* بناء اللاعبين — نضمن وجود emoji و color دائماً */
+    const base    = state.players ?? _buildPlayers(state);
+    const players = base.map((p, i) => ({
+      emoji: (typeof PLAYER_EMOJIS !== 'undefined' ? PLAYER_EMOJIS : ['🐪','👑','⚔️','📚'])[i % 4],
+      color: (typeof PLAYER_COLORS !== 'undefined' ? PLAYER_COLORS : ['#FF4040','#4080FF','#40CC40','#FFD060'])[i % 4],
+      ...p,
+    }));
 
     /* تمرير الإعدادات للمحرك */
     const gameConfig = {

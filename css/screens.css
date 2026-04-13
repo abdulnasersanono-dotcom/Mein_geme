@@ -28,6 +28,9 @@
   position: fixed;
   inset: 0;
   z-index: 100;
+  /* pointer-events: none هنا حتى لا يحجب الرقعة بعد بدء اللعبة.
+     الشاشات النشطة تتجاوزه بـ pointer-events: all */
+  pointer-events: none;
 }
 
 /* ─── شاشة عامة ───────────────────────────────────────────────── */
@@ -39,11 +42,12 @@
   justify-content: center;
   background: var(--bg-dark);
   opacity: 0;
+  pointer-events: none;   /* مخفية → لا تحجب النقرات */
   transition: opacity .3s ease;
   overflow: hidden;
 }
-.screen.active   { opacity: 1; pointer-events: all; }
-.screen.leaving  { opacity: 0; pointer-events: none; }
+.screen.active   { opacity: 1; pointer-events: all; }   /* نشطة → تستقبل النقرات */
+.screen.leaving  { opacity: 0; pointer-events: none; }  /* خروج → لا تحجب النقرات */
 
 /* ─── خلفية زخرفية مشتركة ─────────────────────────────────────── */
 .lang-bg-pattern,
