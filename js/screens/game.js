@@ -9,7 +9,7 @@
 window.GameScreen = (() => {
 
   /* ── render: لا يُنشئ HTML (gameUI موجود بالفعل في index.html) */
-  function render(nav) {
+  function render(_nav) {
     return '';   // رقعة اللعبة مُضمَّنة في index.html
   }
 
@@ -51,9 +51,9 @@ window.GameScreen = (() => {
     console.log('🎮 Game config:', gameConfig);
 
     /* استدعاء دالة محرك اللعبة الرئيسية */
-    if (typeof initGame === 'function')  initGame(players, gameConfig);
+    if (typeof initGame === 'function')    initGame(players, gameConfig);
     if (typeof camOverview === 'function') camOverview();
-    if (typeof startTurn === 'function')   startTurn(0);
+    // startTurn(0) لا تُستدعى هنا — initGame تستدعيها داخلياً
   }
 
   /* ── بناء مصفوفة اللاعبين من الإعدادات ──────────────────────── */

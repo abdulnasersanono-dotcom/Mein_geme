@@ -101,6 +101,6 @@ class TokenManager {
 const tokenMgr = new TokenManager();
 
 // ── دوال تحويل للتوافق مع النداءات الموجودة ──
-function initGame(players)               { tokenMgr.initGame(players); }
+function initGame(players, config)       { tokenMgr.initGame(players, config); }
 function createTokens()                  { tokenMgr.createTokens(); }
 function moveTokenAnim(playerIdx, toSq)  { tokenMgr.moveToken(playerIdx, toSq); }

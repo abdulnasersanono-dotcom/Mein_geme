@@ -37,7 +37,6 @@ window.endTurn = function () {
 };
 
 /* ── التشغيل الأول ──────────────────────────────────────── */
-// فتح شاشة الإعداد عند أول تحميل
-setupUI.open();
+// اللعبة تبدأ عبر Navigator (screens/) — setupUI.open() تُستدعى فقط من زر الإعدادات ⚙️
 
 console.log('✅ Silk Road: The Golden Era — loaded');

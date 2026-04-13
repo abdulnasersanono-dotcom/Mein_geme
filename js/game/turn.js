@@ -47,82 +47,6 @@ class TurnManager {
        الانتقال إلى اللاعب التالي غير المُفلِس
     ══════════════════════════════════════════════════════════ */
     nextTurn() {
-           // ← أضف هذا السطر الواحد هنا فقط
-    localStorage.setItem('silkroad_savegame', JSON.stringify(nav.state));
-        fx.stopTimer();
-        hud.enableDiceBtn(false);
-
-        let next  = (G.turn + 1) % G.players.length;
-        let loops = 0;
-
-        // تخطي المُفلِسين
-        while (G.players[next].isBankrupt) {
-            next = (next + 1) % G.players.length;
-            if (++loops > G.players.length) { actionHandler.endGame(); return; }
-        }
-
-        // شرط الفوز: بقي لاعب واحد فقط
-        const active = G.players.filter(p => !p.isBankrupt);
-        if (active.length === 1) { actionHandler.endGame(active[0]); return; }
-
-        setTimeout(() => this.startTurn(next), 600);
-    }
-
-    /* ══════════════════════════════════════════════════════════
-       رمي النرد ومعالجة النتيجة
-    ══════════════════════════════════════════════════════════ */
-    rollDice() {
-        if (G.phase !== 'playing') return;
-
-        hud.enableDiceBtn(false);
-        fx.stopTimer();
-        fx.haptic('medium');
-        fx.sndDice();
-
-        // وميض الكاميرا
-        const flash = document.getElementById('camFlash');
-        flash.classList.add('on');
-        setTimeout(() => flash.classList.remove('on'), 380);
-
-        // توليد النرد
-        const d1       = ~~(Math.random() * 6) + 1;
-        const d2       = ~~(Math.random() * 6) + 1;
-        const total    = d1 + d2;
-        const isDouble = d1 === d2;
-
-        if (isDouble) G.doublesCount++;
-        else          G.doublesCount = 0;
-
-        // ثلاثة توائم متتالية → سجن
-        if (G.doublesCount >= 3) {
-            showDiceToast(d1, d2, 'ثلاثة توائم! اذهب للسجن');
-            setTimeout(() => actionHandler.sendToJail(G.turn), 1400);
-            return;
-        }
-
-        showDiceToast(d1, d2, `تتقدم ${total} خطوات`);
-        const p = G.players[G.turn];
-
-        // منطق الخروج من السجن
-        if (p.jailTurns > 0) {
-            if (isDouble) {
-                p.jailTurns = 0;
-                hud.toast(`${p.emoji} خرج من السجن بالتوائم!`);
-            } else {
-                p.jailTurns--;
-                if (p.jailTurns === 0) {
-                    actionHandler.deductMoney(G.turn, 50);
-                    hud.toast(`${p.emoji} دفع 50 ديناراً للخروج من السجن`);
-                } else {
-                    hud.toast(`${p.emoji} لا يزال في السجن (${p.jailTurns} دور متبقي)`);
-                    setTimeout(() => { camAnimTo(38, 45, 600); this.nextTurn(); }, 1800);
-                    return;
-                }
-            }
-        }
-  
-        
-        
         fx.stopTimer();
         hud.enableDiceBtn(false);
 
@@ -200,7 +124,7 @@ class TurnManager {
             this._animateMovement(G.turn, total, () => {
                 camera.overview();
                 landingHandler.landOnSquare(G.turn, G.players[G.turn].sq);
-                // التوائم تمنح رمية إضافية
+                // التوائم تمنح رمية إضافية — فقط إذا لم يكن في السجن
                 if (isDouble && G.players[G.turn].jailTurns === 0) {
                     setTimeout(() => {
                         hud.toast(`${G.players[G.turn].emoji} توائم! ارم النرد مجدداً`);
