@@ -24,23 +24,26 @@ class TokenManager {
        تهيئة اللعبة وبدء الدور الأول
        @param {Object[]} players - مصفوفة بيانات اللاعبين
     ══════════════════════════════════════════════════════════ */
-    initGame(players) {
-        // ضبط الحالة المركزية
-        G.players      = players;
-        G.turn         = 0;
-        G.phase        = 'playing';
-        G.props        = {};
-        G.doublesCount = 0;
-        G.bankMoney    = 20580;
+   initGame(players, config) {           // ← أضف config هنا فقط
+    // ضبط الحالة المركزية
+    G.players      = players;
+    G.turn         = 0;
+    G.phase        = 'playing';
+    G.props        = {};
+    G.doublesCount = 0;
+    G.bankMoney    = 20580;
 
-        // بناء الرموز وتحديث الواجهة
-        this.createTokens();
-        hud.refreshOpponentPanels();
-        hud.refreshTopBar();
+    // ← أضف هذا السطر الواحد هنا
+    if (config?.rules) G.rules = config.rules;
 
-        // بدء الدور الأول
-        turnMgr.startTurn(0);
-    }
+    // بناء الرموز وتحديث الواجهة
+    this.createTokens();
+    hud.refreshOpponentPanels();
+    hud.refreshTopBar();
+
+    // بدء الدور الأول
+    turnMgr.startTurn(0);
+}
 
     /* ══════════════════════════════════════════════════════════
        إنشاء عنصر SVG لكل لاعب وتثبيته على خلية الانطلاق

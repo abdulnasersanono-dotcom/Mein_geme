@@ -1,0 +1,489 @@
+/* ═══════════════════════════════════════════════════════════════════
+   screens.css — أنماط الشاشات الثلاث
+   Language + GameMode + NewGame
+═══════════════════════════════════════════════════════════════════ */
+
+/* ─── المتغيرات العامة ─────────────────────────────────────────── */
+:root {
+  --gold:        #d4a843;
+  --gold-light:  #f0c96a;
+  --gold-dark:   #a07820;
+  --bg-dark:     #0e0a04;
+  --bg-card:     #1a1408;
+  --bg-panel:    #221a08;
+  --text:        #f5e6c0;
+  --text-dim:    #8a7050;
+  --red:         #c0392b;
+  --red-light:   #e74c3c;
+  --blue:        #1a5276;
+  --blue-light:  #2980b9;
+  --green:       #1a6b3a;
+  --green-light: #27ae60;
+  --radius:      12px;
+  --shadow:      0 4px 24px rgba(0,0,0,.6);
+}
+
+/* ─── كونتينر الشاشات ─────────────────────────────────────────── */
+#screen-container {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+/* ─── شاشة عامة ───────────────────────────────────────────────── */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-dark);
+  opacity: 0;
+  transition: opacity .3s ease;
+  overflow: hidden;
+}
+.screen.active   { opacity: 1; pointer-events: all; }
+.screen.leaving  { opacity: 0; pointer-events: none; }
+
+/* ─── خلفية زخرفية مشتركة ─────────────────────────────────────── */
+.lang-bg-pattern,
+.gm-bg-pattern,
+.ng-bg-pattern {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(212,168,67,.07) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(212,168,67,.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* ─── خط ذهبي فاصل ────────────────────────────────────────────── */
+.gold-divider {
+  border: none;
+  border-top: 1px solid rgba(212,168,67,.3);
+  margin: 14px 0;
+}
+
+/* ─── أزرار 3D عامة ───────────────────────────────────────────── */
+.btn-3d {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 28px;
+  border: none;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: .95rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s;
+  user-select: none;
+}
+.btn-3d:active { transform: translateY(2px) !important; }
+
+.btn-ghost {
+  background: transparent;
+  border: 1.5px solid var(--gold-dark);
+  color: var(--gold);
+}
+.btn-ghost:hover { background: rgba(212,168,67,.1); }
+
+.btn-red {
+  background: linear-gradient(135deg, var(--red-light), var(--red));
+  color: #fff;
+  box-shadow: 0 4px 0 #7b1a10, var(--shadow);
+}
+.btn-red:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #7b1a10, var(--shadow); }
+
+.btn-blue {
+  background: linear-gradient(135deg, var(--blue-light), var(--blue));
+  color: #fff;
+  box-shadow: 0 4px 0 #0d2e45, var(--shadow);
+}
+.btn-blue:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #0d2e45, var(--shadow); }
+
+.btn-green {
+  background: linear-gradient(135deg, var(--green-light), var(--green));
+  color: #fff;
+  box-shadow: 0 4px 0 #0d3d20, var(--shadow);
+  font-size: 1.05rem;
+  padding: 15px 36px;
+}
+.btn-green:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #0d3d20, var(--shadow); }
+
+/* ══════════════════════════════════════════════════════════════════
+   SCREEN 1 — LANGUAGE
+═══════════════════════════════════════════════════════════════════ */
+.screen-language { flex-direction: column; }
+
+.lang-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  z-index: 1;
+}
+
+/* شعار */
+.lang-logo { text-align: center; }
+.lang-logo-icon  { font-size: 3.5rem; margin-bottom: 6px; }
+.lang-logo-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: .2em;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(212,168,67,.5);
+}
+.lang-logo-sub {
+  font-size: .8rem;
+  color: var(--gold-dark);
+  letter-spacing: .15em;
+  margin-top: 4px;
+}
+
+/* عنوان الاختيار */
+.lang-prompt {
+  font-size: 1rem;
+  color: var(--text-dim);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* شبكة اللغات */
+.lang-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 420px;
+  width: 90%;
+}
+
+.lang-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 12px;
+  background: var(--bg-card);
+  border: 1.5px solid rgba(212,168,67,.2);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  transition: all .2s;
+  animation: fadeUp .4s ease both;
+  opacity: 0;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.lang-btn:hover {
+  border-color: var(--gold);
+  background: var(--bg-panel);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(212,168,67,.2);
+}
+.lang-btn.selected {
+  border-color: var(--gold);
+  background: rgba(212,168,67,.12);
+  box-shadow: 0 0 20px rgba(212,168,67,.3);
+}
+
+.lang-flag { font-size: 2rem; }
+.lang-name { font-size: .8rem; font-weight: 600; color: var(--text); letter-spacing: .05em; }
+
+/* ══════════════════════════════════════════════════════════════════
+   SCREEN 2 — GAMEMODE
+═══════════════════════════════════════════════════════════════════ */
+.screen-gamemode { gap: 0; }
+
+/* زر العودة */
+.gm-back-btn {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  font-size: .8rem;
+  padding: 8px 16px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+/* لوحات الزخرفة */
+.gm-side {
+  width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px 0;
+  opacity: .4;
+}
+.gm-deco-icon  { font-size: 3rem; }
+.gm-deco-line  { width: 1px; height: 60px; background: var(--gold-dark); }
+.gm-deco-dots  { display: flex; flex-direction: column; gap: 8px; }
+.gm-deco-dots span { font-size: .7rem; color: var(--gold-dark); }
+
+/* المنتصف */
+.gm-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+  max-width: 400px;
+}
+
+.gm-logo { text-align: center; }
+.gm-logo-icon  { font-size: 4rem; margin-bottom: 4px; }
+.gm-logo-title {
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: .25em;
+  color: var(--gold);
+  text-shadow: 0 0 24px rgba(212,168,67,.6);
+}
+.gm-logo-sub {
+  font-size: .75rem;
+  color: var(--gold-dark);
+  letter-spacing: .15em;
+  margin-top: 4px;
+}
+
+.gm-btn-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.gm-btn-stack .btn-3d {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 14px 20px;
+  position: relative;
+}
+
+.btn-icon { font-size: 1.1rem; }
+.btn-text { flex: 1; text-align: left; }
+
+.btn-badge {
+  font-size: .65rem;
+  background: rgba(255,255,255,.2);
+  padding: 2px 7px;
+  border-radius: 20px;
+  letter-spacing: .06em;
+}
+
+/* Toast */
+.gm-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--bg-panel);
+  border: 1px solid var(--gold-dark);
+  color: var(--text);
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: .9rem;
+  opacity: 0;
+  transition: all .25s;
+  z-index: 999;
+  pointer-events: none;
+}
+.gm-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ══════════════════════════════════════════════════════════════════
+   SCREEN 3 — NEW GAME
+═══════════════════════════════════════════════════════════════════ */
+.screen-newgame { flex-direction: column; padding: 0; }
+
+/* Header */
+.ng-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  background: var(--bg-card);
+  border-bottom: 1px solid rgba(212,168,67,.2);
+  gap: 16px;
+  flex-shrink: 0;
+}
+.ng-back-btn  { font-size: .8rem; padding: 8px 16px; cursor: pointer; }
+.ng-title     { flex: 1; text-align: center; font-size: 1.2rem; font-weight: 900; letter-spacing: .12em; color: var(--gold); margin: 0; }
+.ng-version   { font-size: .75rem; color: var(--text-dim); }
+
+/* Body */
+.ng-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.ng-col {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ng-col:first-child { border-right: 1px solid rgba(212,168,67,.15); }
+
+.ng-section-label {
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+/* عدد اللاعبين */
+.ng-count-row { display: flex; gap: 8px; }
+.count-btn {
+  flex: 1;
+  padding: 10px;
+  background: var(--bg-card);
+  border: 1.5px solid rgba(212,168,67,.25);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+}
+.count-btn:hover   { border-color: var(--gold); background: var(--bg-panel); }
+.count-btn.active  { background: var(--gold); color: #000; border-color: var(--gold); box-shadow: 0 0 14px rgba(212,168,67,.4); }
+
+/* إدخال النص */
+.ng-input {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--bg-card);
+  border: 1.5px solid rgba(212,168,67,.25);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: .95rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color .2s;
+}
+.ng-input:focus { outline: none; border-color: var(--gold); background: var(--bg-panel); }
+
+/* السلايدر */
+.ng-slider-row { display: flex; align-items: center; gap: 12px; }
+.ng-slider-row input[type=range] {
+  flex: 1;
+  accent-color: var(--gold);
+  height: 4px;
+  cursor: pointer;
+}
+.ng-slider-val {
+  min-width: 80px;
+  text-align: right;
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+/* القواعد */
+.ng-rules { display: flex; flex-direction: column; gap: 8px; }
+.rule-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid rgba(212,168,67,.12);
+  border-radius: 8px;
+  transition: background .2s;
+}
+.rule-row:hover  { background: var(--bg-panel); }
+.rule-icon       { font-size: 1rem; }
+.rule-label      { flex: 1; font-size: .85rem; color: var(--text); }
+
+/* Toggle Pill */
+.toggle-pill { position: relative; cursor: pointer; flex-shrink: 0; }
+.toggle-pill input { position: absolute; opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  display: block;
+  width: 42px;
+  height: 24px;
+  background: rgba(255,255,255,.1);
+  border-radius: 12px;
+  position: relative;
+  transition: background .2s;
+}
+.toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .2s, background .2s;
+}
+.toggle-pill input:checked + .toggle-track { background: var(--green-light); }
+.toggle-pill input:checked + .toggle-track .toggle-thumb { transform: translateX(18px); background: #fff; }
+
+/* ملخص الإعدادات */
+.ng-summary {
+  background: var(--bg-card);
+  border: 1px solid rgba(212,168,67,.2);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.summary-title { font-size: .8rem; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
+.summary-line  { font-size: .82rem; color: var(--text-dim); }
+
+/* Footer */
+.ng-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border-top: 1px solid rgba(212,168,67,.2);
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+.ng-footer .btn-ghost { flex: 1; max-width: 200px; }
+.ng-footer .btn-green { flex: 1; max-width: 220px; }
+
+/* Toast خطأ */
+.ng-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: #c0392b;
+  color: #fff;
+  padding: 11px 22px;
+  border-radius: 30px;
+  font-size: .88rem;
+  opacity: 0;
+  transition: all .25s;
+  z-index: 999;
+  pointer-events: none;
+}
+.ng-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .ng-body         { grid-template-columns: 1fr; }
+  .ng-col:first-child { border-right: none; border-bottom: 1px solid rgba(212,168,67,.15); }
+  .gm-side         { display: none; }
+  .lang-grid       { grid-template-columns: repeat(2, 1fr); }
+}

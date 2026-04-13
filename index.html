@@ -8,15 +8,23 @@
   <!-- ══════════════════════════════════════════════
        CSS — الترتيب مهم: tokens أولاً ثم الباقي
   ════════════════════════════════════════════════ -->
+  <link rel="stylesheet" href="css/screens.css">
   <link rel="stylesheet" href="css/tokens.css">     <!-- متغيرات التصميم الأساسية -->
   <link rel="stylesheet" href="css/base.css">       <!-- reset، html/body، قفل الوضع الأفقي -->
   <link rel="stylesheet" href="css/layout.css">     <!-- اللوحة، الأعمدة، الطبقات -->
   <link rel="stylesheet" href="css/components.css"> <!-- صفوف اللاعبين، الأزرار، النرد -->
   <link rel="stylesheet" href="css/modals.css">     <!-- جميع نوافذ الحوار -->
   <link rel="stylesheet" href="css/cards.css">      <!-- بطاقات الفانوس والفرمان -->
+  
 </head>
 <body>
+<!-- كونتينر الشاشات — يجب أن يكون أول عنصر في body -->
+<div id="screen-container"></div>
 
+<!-- رقعة اللعبة — مخفية حتى يضغط اللاعب Start -->
+<div id="gameUI" style="display:none;">
+  <!-- محتوى لعبتك الموجود هنا كما هو -->
+</div>
 <!-- ════════════════════════════════════
      طبقات الخلفية (z-index 0)
 ════════════════════════════════════ -->
@@ -376,12 +384,33 @@
 <script src="js/game/landing.js"></script>        <!-- landOnSquare, handlePropertyLanding, calcRent, moveTo -->
 <script src="js/game/actions.js"></script>        <!-- jail, cards, buy, auction, mortgage, build, trade, bankruptcy, gameover -->
 
+
+<!-- 2. بدء التشغيل -->
+<script>
+  const nav = createNavigator();
+  nav.start('language');   // يبدأ من شاشة اللغات
+</script>
 <!-- ⑦ واجهة المستخدم -->
 <script src="js/ui/setup.js"></script>            <!-- openSetup, startGameFromSetup -->
 <script src="js/ui/dice.js"></script>             <!-- showDiceToast, dice canvas -->
 
 <!-- ⑧ التشغيل الأول (آخر ملف) -->
 <script src="js/main.js"></script>                <!-- rollDice, secAction, openSetup(), boot -->
+
+<!-- ======================================================= -->
+<!--  ⑨ شاشات القوائم — تُضاف هنا بعد كل ملفات اللعبة      -->
+<!-- ======================================================= -->
+<script src="js/screens/language.js"></script>
+<script src="js/screens/gamemode.js"></script>
+<script src="js/screens/newgame.js"></script>
+<script src="js/screens/game.js"></script>
+<script src="js/screens/navigator.js"></script>
+
+<script>
+  const nav = createNavigator();
+  nav.start('language');
+</script>
+<!-- ======================================================= -->
 
 </body>
 </html>
