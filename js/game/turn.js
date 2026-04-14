@@ -21,6 +21,20 @@ class TurnManager {
         // تخطي اللاعب المُفلِس
         if (!p || p.isBankrupt) { this.nextTurn(); return; }
 
+    p.taxFree          = false;   // حماية الجان
+    p.nextRentFree     = false;   // مرآة الحقيقة
+    p.doubleNextRent   = false;   // بركة التجارة
+    p.doubleRentHost   = false;   // هيبة التاجر
+    p.noRentCollect    = false;   // إغلاق السوق
+    p.rentImmunityHost = false;   // إخلاء سبيل
+    p.utilityFree      = false;   // إعفاء ملكي
+    p.doubleUtility    = false;   // نقص المياه
+    p.halfPriceNext    = false;   // بشارة الطريق
+    p.extraTurn        = false;   // عين الحياة
+    p.pendingFreeMove  = false;   // بساط الريح
+    p.pendingSwap      = false;   // تبادل الأقدار
+
+    
         // تأثير الفرمان: تخطي دور
         if (p.skipTurn) {
             p.skipTurn = false;

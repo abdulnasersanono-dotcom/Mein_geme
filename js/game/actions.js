@@ -40,6 +40,231 @@ class ActionHandler {
     }
 
     /* ══════════════════════════════════════════════════════════
+       دوال مساعدة للبطاقات
+    ══════════════════════════════════════════════════════════ */
+
+    /**
+     * تحريك لاعب إلى مربع محدد مع خيار جمع مكافأة الانطلاق
+     * @param {number}  pidx           - فهرس اللاعب
+     * @param {number}  targetSq       - رقم المربع المستهدف (0-39)
+     * @param {boolean} collectSalary  - هل يجمع 200 عند المرور بالانطلاق؟
+     */
+    moveTo(pidx, targetSq, collectSalary) {
+        const p = G.players[pidx];
+
+        // إذا تجاوز خانة الانطلاق أثناء التنقل
+        if (collectSalary && targetSq < p.sq) {
+            p.money += 200;
+            fx.sndCoin();
+            hud.toast(`${p.emoji} مرّ على انطلق +200 💰`);
+        }
+
+        p.sq = targetSq;
+        moveTokenAnim(pidx, targetSq);
+        camera.followSquare(targetSq);
+        hud.refreshTopBar();
+
+        // تنفيذ حدث المربع بعد الانتقال
+        setTimeout(() => {
+            camera.overview();
+            landingHandler.landOnSquare(pidx, targetSq);
+        }, 600);
+    }
+
+    /**
+     * جمع مبلغ من جميع اللاعبين الآخرين
+     * @param {number} pidx   - فهرس اللاعب الجامع
+     * @param {number} amount - المبلغ المجموع من كل لاعب
+     */
+    collectFromAllPlayers(pidx, amount) {
+        const p = G.players[pidx];
+        G.players.forEach((other, i) => {
+            if (i === pidx || other.isBankrupt) return;
+            const actual = Math.min(amount, other.money); // لا يدفع أكثر مما يملك
+            other.money -= actual;
+            p.money     += actual;
+            if (other.money < 0) this._checkBankruptcy(i);
+        });
+        fx.sndCoin();
+        hud.refreshTopBar();
+        hud.refreshOpponentPanels();
+    }
+
+    /**
+     * دفع مبلغ لجميع اللاعبين الآخرين
+     * @param {number} pidx   - فهرس اللاعب الدافع
+     * @param {number} amount - المبلغ المدفوع لكل لاعب
+     */
+    payAllPlayers(pidx, amount) {
+        const p     = G.players[pidx];
+        const count = G.players.filter((o, i) => i !== pidx && !o.isBankrupt).length;
+        const total = amount * count;
+
+        if (p.money < total) {
+            // إذا لم يكفِ ماله، يدفع ما يستطيع لكل لاعب
+            G.players.forEach((other, i) => {
+                if (i === pidx || other.isBankrupt) return;
+                const actual = Math.min(amount, Math.max(0, p.money));
+                p.money    -= actual;
+                other.money += actual;
+            });
+        } else {
+            G.players.forEach((other, i) => {
+                if (i === pidx || other.isBankrupt) return;
+                p.money    -= amount;
+                other.money += amount;
+            });
+        }
+
+        if (p.money < 0) this._checkBankruptcy(pidx);
+        hud.refreshTopBar();
+        hud.refreshOpponentPanels();
+    }
+
+    /**
+     * الانتقال إلى أقرب مربع من نوع معين
+     * @param {number} pidx - فهرس اللاعب
+     * @param {'railroad'|'utility'|'unowned'} type - نوع المربع
+     */
+    moveToNearest(pidx, type) {
+        const p        = G.players[pidx];
+        const current  = p.sq;
+        let   nearest  = -1;
+        let   minDist  = 999;
+
+        BOARD_DATA.forEach((sq, i) => {
+            let match = false;
+            if (type === 'railroad') match = sq.type === 'railroad';
+            if (type === 'utility')  match = sq.type === 'utility';
+            if (type === 'unowned')  match = (sq.type === 'prop' || sq.type === 'railroad' || sq.type === 'utility')
+                                             && !G.props[i];
+            if (!match) return;
+
+            // المسافة على الرقعة الدائرية
+            const dist = (i - current + 40) % 40;
+            if (dist > 0 && dist < minDist) { minDist = dist; nearest = i; }
+        });
+
+        if (nearest === -1) {
+            hud.toast('لا يوجد مربع مناسب قريب');
+            setTimeout(() => turnMgr.nextTurn(), 800);
+            return;
+        }
+
+        this.moveTo(pidx, nearest, true);
+    }
+
+    /**
+     * الانتقال إلى أول عقار يمتلكه اللاعب من نوع معين
+     * @param {number} pidx - فهرس اللاعب
+     * @param {'railroad'|'prop'|'utility'} type - نوع العقار
+     */
+    moveToOwnedProp(pidx, type) {
+        const p    = G.players[pidx];
+        const prop = p.props.find(sqIdx => BOARD_DATA[sqIdx]?.type === type);
+
+        if (prop === undefined) {
+            hud.toast('لا تملك بوابات بعد');
+            setTimeout(() => turnMgr.nextTurn(), 800);
+            return;
+        }
+
+        this.moveTo(pidx, prop, true);
+    }
+
+    /**
+     * مبادلة موضع لاعبَين على الرقعة
+     * @param {number} pidx        - فهرس اللاعب الذي سحب البطاقة
+     * @param {number} targetPidx  - فهرس اللاعب المستهدف
+     */
+    swapPositions(pidx, targetPidx) {
+        const p      = G.players[pidx];
+        const target = G.players[targetPidx];
+        if (!target || target.isBankrupt) {
+            hud.toast('لا يمكن التبادل مع هذا اللاعب');
+            return;
+        }
+
+        // تبادل المربعين
+        const tmpSq  = p.sq;
+        p.sq         = target.sq;
+        target.sq    = tmpSq;
+
+        moveTokenAnim(pidx,       p.sq);
+        moveTokenAnim(targetPidx, target.sq);
+        camera.followSquare(p.sq);
+
+        hud.toast(`${p.emoji} تبادل الموضع مع ${target.emoji} ↔`);
+        fx.haptic('medium');
+
+        // تطبيق حدث المربع الجديد
+        setTimeout(() => {
+            camera.overview();
+            landingHandler.landOnSquare(pidx, p.sq);
+        }, 800);
+    }
+
+    /**
+     * ترقية منزل إلى فندق مجاناً (أول منزل متاح)
+     * @param {number} pidx - فهرس اللاعب
+     */
+    freeUpgrade(pidx) {
+        const p = G.players[pidx];
+
+        // ابحث عن أول عقار يملك منازل وغير مرهون وليس فندقاً بعد
+        const sqIdx = p.props.find(i => {
+            const own = G.props[i];
+            const sq  = BOARD_DATA[i];
+            return own && sq?.type === 'prop' && !own.mortgaged
+                   && own.houses > 0 && own.houses < 5;
+        });
+
+        if (sqIdx === undefined) {
+            hud.toast('لا يوجد منزل قابل للترقية');
+            return;
+        }
+
+        G.props[sqIdx].houses++;
+        hud.toast(`${p.emoji} ترقية مجانية على ${BOARD_DATA[sqIdx].n} 🏨`);
+        fx.sndCoin();
+        hud.refreshTopBar();
+    }
+
+    /**
+     * تحصيل ضعف إيجار أغنى عقار يمتلكه اللاعب
+     * @param {number} pidx - فهرس اللاعب
+     */
+    collectDoubleRent(pidx) {
+        const p = G.players[pidx];
+
+        // إيجد العقار الأعلى إيجاراً
+        let bestSqIdx = -1;
+        let bestRent  = 0;
+
+        p.props.forEach(sqIdx => {
+            const own = G.props[sqIdx];
+            const sq  = BOARD_DATA[sqIdx];
+            if (!own || !sq?.rent || own.mortgaged) return;
+            const h    = own.houses || 0;
+            const rent = sq.rent[h] || 0;
+            if (rent > bestRent) { bestRent = rent; bestSqIdx = sqIdx; }
+        });
+
+        if (bestSqIdx === -1 || bestRent === 0) {
+            hud.toast('لا توجد عقارات لتحصيل إيجارها');
+            return;
+        }
+
+        const doubled = bestRent * 2;
+        p.money      += doubled;
+        p.lastGain    = doubled;
+        fx.sndCoin();
+        hud.toast(`${p.emoji} إيجار مضاعف +${doubled} من ${BOARD_DATA[bestSqIdx].n} 💰`);
+        hud.refreshTopBar();
+        hud.refreshOpponentPanels();
+    }
+
+    /* ══════════════════════════════════════════════════════════
        البطاقات (فانوس / فرمان)
     ══════════════════════════════════════════════════════════ */
     /**
@@ -63,7 +288,7 @@ class ActionHandler {
 
         fx.sndScroll();
         if (isFirman) fx.haptic('heavy');
-        else fx.burst(innerWidth / 2, innerHeight / 2, 20, true);
+        else          fx.burst(innerWidth / 2, innerHeight / 2, 20, true);
 
         // أنيميشن الكتابة التدريجية
         let i = 0;
@@ -86,11 +311,113 @@ class ActionHandler {
             G.phase = 'playing';
             fx.haptic('light');
             camera.overview();
+
             if (card.fn) card.fn(G.players[pidx], pidx);
+
+            // معالجة التأثيرات التي تحتاج اختيار لاعب من واجهة المستخدم
+            if (G.players[pidx].pendingFreeMove) {
+                this._showFreeMoveUI(pidx);
+                return; // لا ننتقل للدور التالي حتى يختار اللاعب
+            }
+            if (G.players[pidx].pendingSwap) {
+                this._showSwapUI(pidx);
+                return; // لا ننتقل للدور التالي حتى يختار اللاعب
+            }
+
             hud.refreshTopBar();
             hud.refreshOpponentPanels();
             if (!G.players[pidx].isBankrupt) setTimeout(() => turnMgr.nextTurn(), 800);
         };
+    }
+
+    /**
+     * عرض واجهة اختيار مربع للانتقال الحر (بساط الريح L17)
+     * @param {number} pidx - فهرس اللاعب
+     */
+    _showFreeMoveUI(pidx) {
+        const p = G.players[pidx];
+
+        // بناء قائمة المربعات القابلة للاختيار (تستثني السجن ومربع اللاعب الحالي)
+        const select           = document.getElementById('freeMoveModal') || this._createFreeMoveModal();
+        const list             = select.querySelector('#freeMoveList');
+        list.innerHTML         = '';
+
+        BOARD_DATA.forEach((sq, i) => {
+            if (!sq.n || i === p.sq || i === 10 || i === 30) return;
+            const btn = document.createElement('button');
+            btn.className   = 'freeMoveBtn';
+            btn.textContent = `${i}. ${sq.n}`;
+            btn.onclick     = () => {
+                select.classList.remove('open');
+                p.pendingFreeMove = false;
+                this.moveTo(pidx, i, i < p.sq); // يجمع راتب الانطلاق إذا تجاوز خانة 0
+            };
+            list.appendChild(btn);
+        });
+
+        select.classList.add('open');
+    }
+
+    /**
+     * عرض واجهة اختيار لاعب لتبادل الموضع (تبادل الأقدار L30)
+     * @param {number} pidx - فهرس اللاعب
+     */
+    _showSwapUI(pidx) {
+        const p      = G.players[pidx];
+        const modal  = document.getElementById('swapModal') || this._createSwapModal();
+        const list   = modal.querySelector('#swapList');
+        list.innerHTML = '';
+
+        G.players.forEach((other, i) => {
+            if (i === pidx || other.isBankrupt) return;
+            const btn = document.createElement('button');
+            btn.className   = 'swapBtn';
+            btn.textContent = `${other.emoji} ${other.name}`;
+            btn.onclick     = () => {
+                modal.classList.remove('open');
+                p.pendingSwap = false;
+                this.swapPositions(pidx, i);
+            };
+            list.appendChild(btn);
+        });
+
+        modal.classList.add('open');
+    }
+
+    /**
+     * إنشاء نافذة الانتقال الحر ديناميكياً إذا لم تكن موجودة في HTML
+     */
+    _createFreeMoveModal() {
+        const el       = document.createElement('div');
+        el.id          = 'freeMoveModal';
+        el.className   = 'gameModal';
+        el.innerHTML   = `
+            <div class="modalBox">
+              <h3>🪔 بساط الريح — اختر مربعاً</h3>
+              <div id="freeMoveList" class="freeMoveList"></div>
+              <button onclick="document.getElementById('freeMoveModal').classList.remove('open');
+                               turnMgr.nextTurn();" class="modalCancelBtn">إلغاء</button>
+            </div>`;
+        document.body.appendChild(el);
+        return el;
+    }
+
+    /**
+     * إنشاء نافذة تبادل الموضع ديناميكياً إذا لم تكن موجودة في HTML
+     */
+    _createSwapModal() {
+        const el     = document.createElement('div');
+        el.id        = 'swapModal';
+        el.className = 'gameModal';
+        el.innerHTML = `
+            <div class="modalBox">
+              <h3>🪔 تبادل الأقدار — اختر لاعباً</h3>
+              <div id="swapList" class="swapList"></div>
+              <button onclick="document.getElementById('swapModal').classList.remove('open');
+                               turnMgr.nextTurn();" class="modalCancelBtn">إلغاء</button>
+            </div>`;
+        document.body.appendChild(el);
+        return el;
     }
 
     /* ══════════════════════════════════════════════════════════
@@ -106,12 +433,17 @@ class ActionHandler {
         const p  = G.players[pidx];
         const m  = document.getElementById('buyModal');
 
+        // تطبيق خصم نصف السعر إذا كانت بطاقة بشارة الطريق نشطة
+        const finalPrice = p.halfPriceNext ? Math.ceil(sq.price / 2) : sq.price;
+        p.halfPriceNext  = false;
+
         document.getElementById('buyModalTitle').textContent   = sq.n || 'عقار';
-        document.getElementById('buyModalPrice').textContent   = sq.price;
+        document.getElementById('buyModalPrice').textContent   = finalPrice;
         document.getElementById('buyModalBalance').textContent = p.money.toLocaleString('en');
         document.getElementById('buyModalColor').style.background = sq.col || '#555';
-        m.dataset.sqIdx = sqIdx;
-        m.dataset.pidx  = pidx;
+        m.dataset.sqIdx    = sqIdx;
+        m.dataset.pidx     = pidx;
+        m.dataset.price    = finalPrice; // السعر الفعلي بعد الخصم
         m.classList.add('open');
 
         // جدول الإيجارات
@@ -127,14 +459,16 @@ class ActionHandler {
 
     /** تأكيد شراء العقار */
     confirmBuy() {
-        const m     = document.getElementById('buyModal');
-        const sqIdx = +m.dataset.sqIdx;
-        const pidx  = +m.dataset.pidx;
-        const sq    = BOARD_DATA[sqIdx];
-        const p     = G.players[pidx];
+        const m      = document.getElementById('buyModal');
+        const sqIdx  = +m.dataset.sqIdx;
+        const pidx   = +m.dataset.pidx;
+        const price  = +m.dataset.price; // يستخدم السعر المخزّن (قد يكون مخفّضاً)
+        const sq     = BOARD_DATA[sqIdx];
+        const p      = G.players[pidx];
 
         m.classList.remove('open');
-        p.money -= sq.price;
+        p.money -= price;
+        p.lastGain = -price;
         p.props.push(sqIdx);
         G.props[sqIdx] = { owner: pidx, houses: 0, mortgaged: false, sqId: sqIdx };
         fx.sndCoin();
@@ -436,7 +770,6 @@ class ActionHandler {
         document.getElementById('tradeModal').classList.remove('open');
 
         if (to.isBot) {
-            // البوت يقبل إن كان العرض عادلاً
             const fair = this._trade.fromProps.length + fromM >= this._trade.toProps.length + toM - 50;
             setTimeout(() => {
                 if (fair) this.executeTrade();
@@ -485,13 +818,20 @@ class ActionHandler {
        المال والإفلاس
     ══════════════════════════════════════════════════════════ */
     /**
-     * خصم مبلغ من لاعع وفحص الإفلاس
+     * خصم مبلغ من لاعب وفحص الإفلاس
      * @param {number} pidx   - فهرس اللاعب
      * @param {number} amount - المبلغ المخصوم
      */
     deductMoney(pidx, amount) {
-        const p   = G.players[pidx];
-        p.money  -= amount;
+        const p  = G.players[pidx];
+
+        // حماية الجان: تتجاهل الغرامات والضرائب
+        if (p.taxFree) {
+            hud.toast(`${p.emoji} محمي بالجان — لا غرامة!`);
+            return;
+        }
+
+        p.money -= amount;
         if (p.money < 0) this._checkBankruptcy(pidx);
         hud.refreshTopBar();
         hud.refreshOpponentPanels();
@@ -514,7 +854,6 @@ class ActionHandler {
         });
 
         if (p.money < 0) {
-            // إعلان الإفلاس
             p.isBankrupt = true;
             p.props.forEach(sqIdx => { delete G.props[sqIdx]; });
             p.props = [];
@@ -531,17 +870,19 @@ class ActionHandler {
     }
 
     /**
-     * إصلاح جميع المباني (تأثير بطاقة الفرمان)
-     * @param {number} pidx - فهرس اللاعب
+     * إصلاح جميع المباني
+     * @param {number} pidx      - فهرس اللاعب
+     * @param {number} houseCost - تكلفة المنزل (افتراضي 40)
+     * @param {number} hotelCost - تكلفة الفندق (افتراضي 115)
      */
-    repairAll(pidx) {
-        const p   = G.players[pidx];
-        let cost  = 0;
+    repairAll(pidx, houseCost = 40, hotelCost = 115) {
+        const p  = G.players[pidx];
+        let cost = 0;
         p.props.forEach(sqIdx => {
             const own = G.props[sqIdx];
-            const sq  = BOARD_DATA[sqIdx];
-            if (!own || !sq) return;
-            cost += own.houses * 40 + (own.houses === 5 ? 115 : 0);
+            if (!own) return;
+            if (own.houses === 5) cost += hotelCost;
+            else                  cost += own.houses * houseCost;
         });
         this.deductMoney(pidx, cost);
     }
@@ -573,25 +914,33 @@ class ActionHandler {
 const actionHandler = new ActionHandler();
 
 // ── دوال تحويل للتوافق مع النداءات الموجودة ──
-function sendToJail(pidx)           { actionHandler.sendToJail(pidx); }
-function drawCard(pidx, deck)       { actionHandler.drawCard(pidx, deck); }
-function showBuyModal(pidx, sqIdx)  { actionHandler.showBuyModal(pidx, sqIdx); }
-function confirmBuy()               { actionHandler.confirmBuy(); }
-function rejectBuy()                { actionHandler.rejectBuy(); }
-function startAuction(sqIdx)        { actionHandler.startAuction(sqIdx); }
-function submitMyAuction()          { actionHandler.submitMyAuction(); }
-function resolveAuction()           { actionHandler.resolveAuction(); }
-function openMortgageModal()        { actionHandler.openMortgageModal(); }
-function mortgage(sqIdx)            { actionHandler.mortgage(sqIdx); }
-function unmortgage(sqIdx)          { actionHandler.unmortgage(sqIdx); }
-function openBuildModal()           { actionHandler.openBuildModal(); }
-function buyHouse(sqIdx)            { actionHandler.buyHouse(sqIdx); }
-function sellHouse(sqIdx)           { actionHandler.sellHouse(sqIdx); }
-function openTradeModal()           { actionHandler.openTradeModal(); }
-function toggleTradeProp(side, sq)  { actionHandler.toggleTradeProp(side, sq); }
-function submitTrade()              { actionHandler.submitTrade(); }
-function executeTrade()             { actionHandler.executeTrade(); }
-function rejectTrade()              { actionHandler.rejectTrade(); }
-function deductMoney(pidx, amount)  { actionHandler.deductMoney(pidx, amount); }
-function repairAll(pidx)            { actionHandler.repairAll(pidx); }
-function endGame(winner)            { actionHandler.endGame(winner); }
+function sendToJail(pidx)                    { actionHandler.sendToJail(pidx); }
+function moveTo(pidx, sq, salary)            { actionHandler.moveTo(pidx, sq, salary); }
+function collectFromAllPlayers(pidx, amount) { actionHandler.collectFromAllPlayers(pidx, amount); }
+function payAllPlayers(pidx, amount)         { actionHandler.payAllPlayers(pidx, amount); }
+function moveToNearest(pidx, type)           { actionHandler.moveToNearest(pidx, type); }
+function moveToOwnedProp(pidx, type)         { actionHandler.moveToOwnedProp(pidx, type); }
+function swapPositions(pidx, targetPidx)     { actionHandler.swapPositions(pidx, targetPidx); }
+function freeUpgrade(pidx)                   { actionHandler.freeUpgrade(pidx); }
+function collectDoubleRent(pidx)             { actionHandler.collectDoubleRent(pidx); }
+function drawCard(pidx, deck)                { actionHandler.drawCard(pidx, deck); }
+function showBuyModal(pidx, sqIdx)           { actionHandler.showBuyModal(pidx, sqIdx); }
+function confirmBuy()                        { actionHandler.confirmBuy(); }
+function rejectBuy()                         { actionHandler.rejectBuy(); }
+function startAuction(sqIdx)                 { actionHandler.startAuction(sqIdx); }
+function submitMyAuction()                   { actionHandler.submitMyAuction(); }
+function resolveAuction()                    { actionHandler.resolveAuction(); }
+function openMortgageModal()                 { actionHandler.openMortgageModal(); }
+function mortgage(sqIdx)                     { actionHandler.mortgage(sqIdx); }
+function unmortgage(sqIdx)                   { actionHandler.unmortgage(sqIdx); }
+function openBuildModal()                    { actionHandler.openBuildModal(); }
+function buyHouse(sqIdx)                     { actionHandler.buyHouse(sqIdx); }
+function sellHouse(sqIdx)                    { actionHandler.sellHouse(sqIdx); }
+function openTradeModal()                    { actionHandler.openTradeModal(); }
+function toggleTradeProp(side, sq)           { actionHandler.toggleTradeProp(side, sq); }
+function submitTrade()                       { actionHandler.submitTrade(); }
+function executeTrade()                      { actionHandler.executeTrade(); }
+function rejectTrade()                       { actionHandler.rejectTrade(); }
+function deductMoney(pidx, amount)           { actionHandler.deductMoney(pidx, amount); }
+function repairAll(pidx, hCost, htCost)      { actionHandler.repairAll(pidx, hCost, htCost); }
+function endGame(winner)                     { actionHandler.endGame(winner); }
