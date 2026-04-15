@@ -13,9 +13,9 @@ class ActionHandler {
         // حالة المزاد الجارية
         this._auction = { sqIdx: -1, bids: {}, minBid: 10, timer: null, timeLeft: 30 };
 
-        // عرض التجارة الجارية
-        this._trade = { from: -1, to: -1, fromMoney: 0, toMoney: 0, fromProps: [], toProps: [] };
-
+          // عرض التجارة الجارية
+        this._trade = { offeror:-1, receiver:-1, offerorMoney:0, receiverMoney:0, offerorProps:[], receiverProps:[] };
+        this._tradeCounterDepth = 0;
         // مؤقت أنيميشن نص بطاقة الحدث
         this._typeTimer = null;
     }
@@ -700,247 +700,300 @@ class ActionHandler {
     }
 
     /* ══════════════════════════════════════════════════════════
-       التجارة
+       التجارة — Professional Trade Overlay
     ══════════════════════════════════════════════════════════ */
-    /** فتح نافذة التجارة */
+    /** توافق مع الكود القديم — يجد أول خصم ويستدعي openTradeInterface */
     openTradeModal() {
         const pidx = G.turn;
         const p    = G.players[pidx];
-        if (p.isBot) { hud.toast('البوت لا يتداول يدوياً'); return; }
-
         const partner = G.players.find((pp, i) => i !== pidx && !pp.isBankrupt);
         if (!partner) { hud.toast('لا يوجد لاعبون آخرون'); return; }
-
-        const toIdx    = G.players.indexOf(partner);
-        this._trade    = { from: pidx, to: toIdx, fromMoney: 0, toMoney: 0, fromProps: [], toProps: [] };
-        this._renderTradeModal();
-        document.getElementById('tradeModal').classList.add('open');
+        this.openTradeInterface(pidx, G.players.indexOf(partner));
     }
-
-    _renderTradeModal() {
-        const from = G.players[this._trade.from];
-        const to   = G.players[this._trade.to];
-
-        document.getElementById('tradeFromName').textContent  = `${from.emoji} ${from.name}`;
-        document.getElementById('tradeToName').textContent    = `${to.emoji} ${to.name}`;
-        document.getElementById('tradeFromMoney').value       = this._trade.fromMoney;
-        document.getElementById('tradeToMoney').value         = this._trade.toMoney;
-
-        const fl     = document.getElementById('tradeFromProps');
-        fl.innerHTML = '';
-        from.props.forEach(sqIdx => {
-            const sq = BOARD_DATA[sqIdx]; if (!sq) return;
-            const sel = this._trade.fromProps.includes(sqIdx);
-            fl.innerHTML += `<div class="tradeProp ${sel ? 'sel' : ''}"
-              onclick="toggleTradeProp('from',${sqIdx})"
-              style="border-color:${sq.col}"><span style="font-size:10px">${sq.n || ''}</span></div>`;
-        });
-
-        const tl     = document.getElementById('tradeToProps');
-        tl.innerHTML = '';
-        to.props.forEach(sqIdx => {
-            const sq = BOARD_DATA[sqIdx]; if (!sq) return;
-            const sel = this._trade.toProps.includes(sqIdx);
-            tl.innerHTML += `<div class="tradeProp ${sel ? 'sel' : ''}"
-              onclick="toggleTradeProp('to',${sqIdx})"
-              style="border-color:${sq.col}"><span style="font-size:10px">${sq.n || ''}</span></div>`;
-        });
-    }
-
-    /** تبديل عقار في عرض التجارة */
-    toggleTradeProp(side, sqIdx) {
-        const arr = side === 'from' ? this._trade.fromProps : this._trade.toProps;
-        const idx = arr.indexOf(sqIdx);
-        if (idx >= 0) arr.splice(idx, 1); else arr.push(sqIdx);
-        this._renderTradeModal();
-    }
-
-    /** إرسال عرض التجارة */
-    submitTrade() {
-        const fromM = +document.getElementById('tradeFromMoney').value || 0;
-        const toM   = +document.getElementById('tradeToMoney').value   || 0;
-        this._trade.fromMoney = fromM;
-        this._trade.toMoney   = toM;
-
-        const from = G.players[this._trade.from];
-        const to   = G.players[this._trade.to];
-        if (fromM > from.money) { hud.toast('ليس لديك كفاية من الدنانير'); return; }
-        if (toM   > to.money)   { hud.toast('الطرف الآخر لا يملك كفاية');  return; }
-
-        document.getElementById('tradeModal').classList.remove('open');
-
-        if (to.isBot) {
-            const fair = this._trade.fromProps.length + fromM >= this._trade.toProps.length + toM - 50;
-            setTimeout(() => {
-                if (fair) this.executeTrade();
-                else hud.toast(`${to.emoji} رفض العرض`);
-            }, 800);
-        } else {
-            document.getElementById('tradeResponseModal').classList.add('open');
-            document.getElementById('tradeResDesc').textContent =
-                `${from.emoji} يعرض ${fromM} + ${this._trade.fromProps.length} عقار مقابل ${toM} + ${this._trade.toProps.length} عقار`;
-        }
-    }
-
-    /** تنفيذ صفقة التجارة */
-    executeTrade() {
-        const from = G.players[this._trade.from];
-        const to   = G.players[this._trade.to];
-
-        from.money -= this._trade.fromMoney; to.money   += this._trade.fromMoney;
-        to.money   -= this._trade.toMoney;   from.money += this._trade.toMoney;
-
-        this._trade.fromProps.forEach(sqIdx => {
-            from.props = from.props.filter(p => p !== sqIdx);
-            to.props.push(sqIdx);
-            if (G.props[sqIdx]) G.props[sqIdx].owner = this._trade.to;
-        });
-        this._trade.toProps.forEach(sqIdx => {
-            to.props = to.props.filter(p => p !== sqIdx);
-            from.props.push(sqIdx);
-            if (G.props[sqIdx]) G.props[sqIdx].owner = this._trade.from;
-        });
-
-        hud.toast(`${from.emoji} أتمّ الصفقة مع ${to.emoji} 🤝`);
-        fx.sndCoin();
-        hud.refreshTopBar();
-        hud.refreshOpponentPanels();
-        document.getElementById('tradeResponseModal').classList.remove('open');
-    }
-
-    /** رفض عرض التجارة */
-    rejectTrade() {
-        document.getElementById('tradeResponseModal').classList.remove('open');
-        hud.toast(`${G.players[this._trade.to].emoji} رفض العرض`);
-    }
-
-    /* ══════════════════════════════════════════════════════════
-       المال والإفلاس
-    ══════════════════════════════════════════════════════════ */
     /**
-     * خصم مبلغ من لاعب وفحص الإفلاس
-     * @param {number} pidx   - فهرس اللاعب
-     * @param {number} amount - المبلغ المخصوم
+     * فتح واجهة التبادل الاحترافية
+     * @param {number} player1Idx - فهرس اللاعب العارض (يسار)
+     * @param {number} player2Idx - فهرس اللاعب المستقبل (يمين)
      */
-    deductMoney(pidx, amount) {
-        const p  = G.players[pidx];
-
-        // حماية الجان: تتجاهل الغرامات والضرائب
-        if (p.taxFree) {
-            hud.toast(`${p.emoji} محمي بالجان — لا غرامة!`);
-            return;
-        }
-
-        p.money -= amount;
-        if (p.money < 0) this._checkBankruptcy(pidx);
-        hud.refreshTopBar();
-        hud.refreshOpponentPanels();
+    openTradeInterface(player1Idx, player2Idx) {
+        this._trade = {
+            offeror:      player1Idx,
+            receiver:     player2Idx,
+            offerorMoney: 0,
+            receiverMoney:0,
+            offerorProps: [],
+            receiverProps:[],
+        };
+        this._tradeCounterDepth = 0;
+        const overlay = document.getElementById('tradeOverlay');
+        overlay.dataset.phase = 'build';
+        this._renderTradeOverlay();
+        overlay.classList.add('open');
     }
-
-    _checkBankruptcy(pidx) {
-        const p = G.players[pidx];
-
-        // محاولة رفع السيولة عبر الرهن التلقائي
-        let raised = 0;
-        p.props.forEach(sqIdx => {
-            if (raised >= -p.money) return;
-            const own = G.props[sqIdx];
+    /** يملأ كلا العمودين بالبيانات الحالية */
+    _renderTradeOverlay() {
+        const { offeror, receiver, offerorProps, receiverProps } = this._trade;
+        const p1 = G.players[offeror];
+        const p2 = G.players[receiver];
+        document.getElementById('tradeLeftEmoji').textContent  = p1.emoji;
+        document.getElementById('tradeLeftName').textContent   = p1.name;
+        document.getElementById('tradeLeftMoney').textContent  = p1.money.toLocaleString('en') + ' دينار';
+        document.getElementById('tradeLeftCash').value         = this._trade.offerorMoney  || '';
+        document.getElementById('tradeLeftCashBadge').textContent =
+            (this._trade.offerorMoney || 0).toLocaleString('en') + ' ﷼';
+        document.getElementById('tradeRightEmoji').textContent = p2.emoji;
+        document.getElementById('tradeRightName').textContent  = p2.name;
+        document.getElementById('tradeRightMoney').textContent = p2.money.toLocaleString('en') + ' دينار';
+        document.getElementById('tradeRightCash').value        = this._trade.receiverMoney || '';
+        document.getElementById('tradeRightCashBadge').textContent =
+            (this._trade.receiverMoney || 0).toLocaleString('en') + ' ﷼';
+        this._renderTradeSide('left',  offeror,   offerorProps);
+        this._renderTradeSide('right', receiver,  receiverProps);
+    }
+    /**
+     * يبني بطاقات العقارات لعمود واحد
+     * @param {'left'|'right'} side
+     * @param {number} pidx          - مؤشر اللاعب
+     * @param {number[]} selectedArr - العقارات المختارة
+     */
+    _renderTradeSide(side, pidx, selectedArr) {
+        const player  = G.players[pidx];
+        const availEl = document.getElementById(side === 'left' ? 'tradeLeftAvail' : 'tradeRightAvail');
+        const offerEl = document.getElementById(side === 'left' ? 'tradeLeftOffer' : 'tradeRightOffer');
+        const sideKey = side === 'left' ? 'offeror' : 'receiver';
+        availEl.innerHTML = '';
+        offerEl.innerHTML = '';
+        player.props.forEach(sqIdx => {
             const sq  = BOARD_DATA[sqIdx];
-            if (own && !own.mortgaged && own.houses === 0) {
-                own.mortgaged = true;
-                p.money      += sq.mg;
-                raised       += sq.mg;
-            }
+            const own = G.props[sqIdx];
+            if (!sq || sq.type !== 'prop') return;
+            const isBlocked  = !!(own && (own.mortgaged || own.houses > 0));
+            const isSelected = selectedArr.includes(sqIdx);
+            const html       = this._buildTradePropCard(sqIdx, sq, isBlocked, isSelected, sideKey);
+            if (isSelected) offerEl.insertAdjacentHTML('beforeend', html);
+            else            availEl.insertAdjacentHTML('beforeend', html);
         });
-
-        if (p.money < 0) {
-            p.isBankrupt = true;
-            p.props.forEach(sqIdx => { delete G.props[sqIdx]; });
-            p.props = [];
-            hud.toast(`${p.emoji} ${p.name} أفلس! 💀`);
-            fx.haptic('heavy');
-            document.getElementById('bankruptModal').classList.add('open');
-            document.getElementById('bankruptName').textContent = `${p.emoji} ${p.name} أفلس!`;
+        const empty = '<div style="font-size:10px;color:#9a7a30;padding:8px;text-align:center;direction:rtl">لا يوجد</div>';
+        if (!availEl.innerHTML) availEl.innerHTML = empty;
+        if (!offerEl.innerHTML) offerEl.innerHTML = empty;
+    }
+    /** يبني HTML لبطاقة عقار مصغّرة */
+    _buildTradePropCard(sqIdx, sq, isBlocked, isSelected, sideKey) {
+        const cls    = 'tradePropCard' + (isBlocked ? ' blocked' : '') + (isSelected ? ' inOffer' : '');
+        const click  = isBlocked
+            ? 'onclick="tradeBlockedPropClick()"'
+            : `onclick="clickTradeProp('${sideKey}',${sqIdx},this)"`;
+        return `<div class="${cls}" data-sqidx="${sqIdx}" data-sidekey="${sideKey}"
+                     style="border-color:${sq.col}" ${click}>
+                  <div class="tpcBand" style="background:${sq.col}"></div>
+                  <div class="tpcName">${sq.n || ''}</div>
+                  <div class="tpcPrice">${sq.price} ﷼</div>
+                </div>`;
+    }
+    /**
+     * تبديل عقار بين متاح/معروض — مع أنيميشن طيران
+     * @param {'offeror'|'receiver'} sideKey
+     * @param {number} sqIdx
+     * @param {Element} cardEl
+     */
+    clickTradeProp(sideKey, sqIdx, cardEl) {
+        const arr = sideKey === 'offeror' ? this._trade.offerorProps : this._trade.receiverProps;
+        const fromRect = cardEl.getBoundingClientRect();
+        if (arr.includes(sqIdx)) arr.splice(arr.indexOf(sqIdx), 1);
+        else                     arr.push(sqIdx);
+        this._renderTradeOverlay();
+        // Find card in new position for fly animation
+        const toEl = document.querySelector(
+            `[data-sqidx="${sqIdx}"][data-sidekey="${sideKey}"]`
+        );
+        if (toEl) {
+            const toRect = toEl.getBoundingClientRect();
+            this._flyCard(fromRect, toRect, cardEl.style.borderColor || '#C89010');
+        }
+        fx.haptic('light');
+    }
+    /**
+     * أنيميشن طيران بطاقة من موضع إلى آخر (تقنية FLIP)
+     * @param {DOMRect} fromRect - موضع البداية
+     * @param {DOMRect} toRect   - موضع النهاية
+     * @param {string}  color    - لون الحدود
+     */
+    _flyCard(fromRect, toRect, color) {
+        const clone = document.createElement('div');
+        clone.className = 'tradeFlyCard';
+        clone.style.cssText = [
+            `width:${fromRect.width}px`,
+            `height:${fromRect.height}px`,
+            `left:${fromRect.left}px`,
+            `top:${fromRect.top}px`,
+            `border:2px solid ${color}`,
+            `background:rgba(255,240,180,.88)`,
+            `opacity:1`,
+        ].join(';');
+        document.body.appendChild(clone);
+        const dx = toRect.left - fromRect.left;
+        const dy = toRect.top  - fromRect.top;
+        const sx = toRect.width  / (fromRect.width  || 1);
+        const sy = toRect.height / (fromRect.height || 1);
+        // Double-rAF: first frame paints at source, second triggers transition
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                clone.style.transform = `translate(${dx}px,${dy}px) scale(${sx},${sy})`;
+                clone.style.opacity   = '0';
+            });
+        });
+        clone.addEventListener('transitionend', () => clone.remove(), { once: true });
+    }
+    /** يحدّث badge الرصيد فوراً عند الكتابة */
+    updateTradeCashLabel(side) {
+        const val = Math.max(0, parseInt(
+            document.getElementById(side === 'left' ? 'tradeLeftCash' : 'tradeRightCash').value
+        ) || 0);
+        document.getElementById(side === 'left' ? 'tradeLeftCashBadge' : 'tradeRightCashBadge')
+            .textContent = val.toLocaleString('en') + ' ﷼';
+        if (side === 'left') this._trade.offerorMoney  = val;
+        else                 this._trade.receiverMoney = val;
+    }
+    /** إرسال العرض — التحقق والتوجيه للبوت أو الإنسان */
+    submitTradeOffer() {
+        // مزامنة الكاش
+        this._trade.offerorMoney  = Math.max(0, parseInt(document.getElementById('tradeLeftCash').value)  || 0);
+        this._trade.receiverMoney = Math.max(0, parseInt(document.getElementById('tradeRightCash').value) || 0);
+        const p1 = G.players[this._trade.offeror];
+        const p2 = G.players[this._trade.receiver];
+        if (this._trade.offerorMoney  > p1.money) { hud.toast(`${p1.emoji} لا تملك هذا المبلغ`);     fx.sndErr(); return; }
+        if (this._trade.receiverMoney > p2.money) { hud.toast(`${p2.emoji} لا يملك هذا المبلغ`);     fx.sndErr(); return; }
+        const hasOffer =
+            this._trade.offerorProps.length  > 0 || this._trade.offerorMoney  > 0 ||
+            this._trade.receiverProps.length > 0 || this._trade.receiverMoney > 0;
+        if (!hasOffer) { hud.toast('أضف عقاراً أو مبلغاً للعرض'); fx.sndErr(); return; }
+        if (p2.isBot) {
+            document.getElementById('tradeOverlay').classList.remove('open');
+            const decision = this._botTradeDecision();
             setTimeout(() => {
-                document.getElementById('bankruptModal').classList.remove('open');
-                hud.refreshOpponentPanels();
-                turnMgr.nextTurn();
-            }, 2500);
+                if (decision === 'accept') this._executeTradeOverlay();
+                else { hud.toast(`${p2.emoji} رفض العرض`); fx.haptic('medium'); }
+            }, 900);
+        } else {
+            const overlay = document.getElementById('tradeOverlay');
+            overlay.dataset.phase = 'respond';
+            this._renderRespondDesc();
+            this._renderTradeOverlay();
         }
     }
-
-    /**
-     * إصلاح جميع المباني
-     * @param {number} pidx      - فهرس اللاعب
-     * @param {number} houseCost - تكلفة المنزل (افتراضي 40)
-     * @param {number} hotelCost - تكلفة الفندق (افتراضي 115)
-     */
-    repairAll(pidx, houseCost = 40, hotelCost = 115) {
-        const p  = G.players[pidx];
-        let cost = 0;
-        p.props.forEach(sqIdx => {
-            const own = G.props[sqIdx];
-            if (!own) return;
-            if (own.houses === 5) cost += hotelCost;
-            else                  cost += own.houses * houseCost;
+    /** يكتب ملخص العرض للطرف المستقبل */
+    _renderRespondDesc() {
+        const p1  = G.players[this._trade.offeror];
+        const p2  = G.players[this._trade.receiver];
+        const oP  = this._trade.offerorProps.length;
+        const rP  = this._trade.receiverProps.length;
+        const oM  = this._trade.offerorMoney;
+        const rM  = this._trade.receiverMoney;
+        let txt = `${p1.emoji} ${p1.name} يعرض:\n`;
+        if (oM > 0) txt += `${oM.toLocaleString('en')} دينار `;
+        if (oP > 0) txt += `+ ${oP} عقار`;
+        if (oM === 0 && oP === 0) txt += 'لا شيء';
+        txt += `\n\nمقابل:\n`;
+        if (rM > 0) txt += `${rM.toLocaleString('en')} دينار `;
+        if (rP > 0) txt += `+ ${rP} عقار`;
+        if (rM === 0 && rP === 0) txt += 'لا شيء (هبة)';
+        document.getElementById('tradeResDesc').textContent = txt;
+    }
+    /** الطرف المستقبل يقبل */
+    acceptTradeOffer() { this._executeTradeOverlay(); }
+    /** الطرف المستقبل يرفض */
+    rejectTradeOffer() {
+        document.getElementById('tradeOverlay').classList.remove('open');
+        this._tradeCounterDepth = 0;
+        hud.toast(`${G.players[this._trade.receiver].emoji} رفض العرض`);
+        fx.haptic('medium');
+    }
+    /** الطرف المستقبل يقدم عرضاً مضاداً */
+    counterTradeOffer() {
+        if (this._tradeCounterDepth >= 2) {
+            hud.toast('لا يمكن تبادل العروض أكثر من مرتين'); fx.sndErr(); return;
+        }
+        this._tradeCounterDepth++;
+        // عكس الأدوار مع تحميل مسبق للعرض المعكوس
+        const prev = { ...this._trade };
+        this._trade = {
+            offeror:      prev.receiver,
+            receiver:     prev.offeror,
+            offerorMoney: prev.receiverMoney,
+            receiverMoney:prev.offerorMoney,
+            offerorProps: [...prev.receiverProps],
+            receiverProps:[...prev.offerorProps],
+        };
+        const overlay = document.getElementById('tradeOverlay');
+        overlay.dataset.phase = 'build';
+        this._renderTradeOverlay();
+        hud.toast(`${G.players[this._trade.offeror].emoji} يقدم عرضاً مضاداً`);
+    }
+    /** تنفيذ الصفقة — نقل الأموال والعقارات + مؤثرات */
+    _executeTradeOverlay() {
+        const { offeror, receiver, offerorMoney, receiverMoney, offerorProps, receiverProps } = this._trade;
+        const p1 = G.players[offeror];
+        const p2 = G.players[receiver];
+        p1.money -= offerorMoney;  p2.money += offerorMoney;
+        p2.money -= receiverMoney; p1.money += receiverMoney;
+        offerorProps.forEach(sqIdx => {
+            p1.props = p1.props.filter(s => s !== sqIdx);
+            p2.props.push(sqIdx);
+            if (G.props[sqIdx]) G.props[sqIdx].owner = receiver;
         });
-        this.deductMoney(pidx, cost);
+        receiverProps.forEach(sqIdx => {
+            p2.props = p2.props.filter(s => s !== sqIdx);
+            p1.props.push(sqIdx);
+            if (G.props[sqIdx]) G.props[sqIdx].owner = offeror;
+        });
+        document.getElementById('tradeOverlay').classList.remove('open');
+        this._tradeCounterDepth = 0;
+        fx.sndCoin();
+        fx.haptic('success');
+        const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+        setTimeout(() => fx.burst(cx, cy, 28, true), 100);
+        hud.toast(`${p1.emoji} أتمّ الصفقة مع ${p2.emoji} 🤝`);
+        hud.refreshTopBar();
+        hud.refreshOpponentPanels();
     }
-
-    /* ══════════════════════════════════════════════════════════
-       نهاية اللعبة
-    ══════════════════════════════════════════════════════════ */
+    /** إلغاء وإغلاق الواجهة */
+    cancelTradeOverlay() {
+        document.getElementById('tradeOverlay').classList.remove('open');
+        this._tradeCounterDepth = 0;
+        this._trade = { offeror:-1, receiver:-1, offerorMoney:0, receiverMoney:0, offerorProps:[], receiverProps:[] };
+    }
+    /** ردّ فعل على النقر على بطاقة محظورة */
+    tradeBlockedPropClick() {
+        hud.toast('لا يمكن تداول عقارات مرهونة أو عليها مبانٍ 🔒');
+        fx.sndErr();
+        fx.haptic('medium');
+    }
     /**
-     * إنهاء اللعبة وعرض الفائز
-     * @param {Object} [winner] - كائن اللاعب الفائز (اختياري)
+     * قرار البوت: يقبل إذا كانت قيمة ما يستقبله ≥ 85% مما يعطيه
+     * @returns {'accept'|'reject'}
      */
-    endGame(winner) {
-        G.phase = 'over';
-        camera.eventFocus(winner ? winner.sq : 0, false);
-        setTimeout(() => camera.overview(), 1200);
-        fx.burst(innerWidth / 2, innerHeight / 2, 40, true);
-
-        const w = winner || G.players.reduce((a, b) =>
-            (!a.isBankrupt && (b.isBankrupt || a.money > b.money)) ? a : b);
-
-        document.getElementById('gameOverModal').classList.add('open');
-        document.getElementById('gameOverWinner').textContent = `${w.emoji} ${w.name}`;
-        document.getElementById('gameOverMoney').textContent  = w.money.toLocaleString('en');
+    _botTradeDecision() {
+        const propVal = arr => arr.reduce((s, sqIdx) => {
+            const sq = BOARD_DATA[sqIdx]; return s + (sq ? sq.price : 0);
+        }, 0);
+        const receiving = propVal(this._trade.offerorProps)  + this._trade.offerorMoney;
+        const giving    = propVal(this._trade.receiverProps) + this._trade.receiverMoney;
+        if (giving === 0) return 'accept';
+        return (receiving / giving) >= 0.85 ? 'accept' : 'reject';
     }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// الإنستانس العالمي
-const actionHandler = new ActionHandler();
-
-// ── دوال تحويل للتوافق مع النداءات الموجودة ──
-function sendToJail(pidx)                    { actionHandler.sendToJail(pidx); }
-function moveTo(pidx, sq, salary)            { actionHandler.moveTo(pidx, sq, salary); }
-function collectFromAllPlayers(pidx, amount) { actionHandler.collectFromAllPlayers(pidx, amount); }
-function payAllPlayers(pidx, amount)         { actionHandler.payAllPlayers(pidx, amount); }
-function moveToNearest(pidx, type)           { actionHandler.moveToNearest(pidx, type); }
-function moveToOwnedProp(pidx, type)         { actionHandler.moveToOwnedProp(pidx, type); }
-function swapPositions(pidx, targetPidx)     { actionHandler.swapPositions(pidx, targetPidx); }
-function freeUpgrade(pidx)                   { actionHandler.freeUpgrade(pidx); }
-function collectDoubleRent(pidx)             { actionHandler.collectDoubleRent(pidx); }
-function drawCard(pidx, deck)                { actionHandler.drawCard(pidx, deck); }
-function showBuyModal(pidx, sqIdx)           { actionHandler.showBuyModal(pidx, sqIdx); }
-function confirmBuy()                        { actionHandler.confirmBuy(); }
-function rejectBuy()                         { actionHandler.rejectBuy(); }
-function startAuction(sqIdx)                 { actionHandler.startAuction(sqIdx); }
-function submitMyAuction()                   { actionHandler.submitMyAuction(); }
-function resolveAuction()                    { actionHandler.resolveAuction(); }
-function openMortgageModal()                 { actionHandler.openMortgageModal(); }
-function mortgage(sqIdx)                     { actionHandler.mortgage(sqIdx); }
-function unmortgage(sqIdx)                   { actionHandler.unmortgage(sqIdx); }
-function openBuildModal()                    { actionHandler.openBuildModal(); }
+    /* ══════════════════════════════════════════════════════════
 function buyHouse(sqIdx)                     { actionHandler.buyHouse(sqIdx); }
 function sellHouse(sqIdx)                    { actionHandler.sellHouse(sqIdx); }
 function openTradeModal()                    { actionHandler.openTradeModal(); }
-function toggleTradeProp(side, sq)           { actionHandler.toggleTradeProp(side, sq); }
-function submitTrade()                       { actionHandler.submitTrade(); }
-function executeTrade()                      { actionHandler.executeTrade(); }
-function rejectTrade()                       { actionHandler.rejectTrade(); }
+function openTradeInterface(p1, p2)          { actionHandler.openTradeInterface(p1, p2); }
+function clickTradeProp(sk, sq, el)          { actionHandler.clickTradeProp(sk, sq, el); }
+function updateTradeCashLabel(side)          { actionHandler.updateTradeCashLabel(side); }
+function submitTradeOffer()                  { actionHandler.submitTradeOffer(); }
+function acceptTradeOffer()                  { actionHandler.acceptTradeOffer(); }
+function rejectTradeOffer()                  { actionHandler.rejectTradeOffer(); }
+function counterTradeOffer()                 { actionHandler.counterTradeOffer(); }
+function cancelTradeOverlay()                { actionHandler.cancelTradeOverlay(); }
+function tradeBlockedPropClick()             { actionHandler.tradeBlockedPropClick(); }
 function deductMoney(pidx, amount)           { actionHandler.deductMoney(pidx, amount); }
 function repairAll(pidx, hCost, htCost)      { actionHandler.repairAll(pidx, hCost, htCost); }
 function endGame(winner)                     { actionHandler.endGame(winner); }

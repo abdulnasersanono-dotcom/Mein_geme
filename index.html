@@ -272,51 +272,81 @@
   </div>
 </div>
 
-<!-- التبادل التجاري -->
-<div id="tradeModal" class="modalOv">
-  <div class="modalBox" style="max-width:380px">
-    <div class="modalHead" style="background:linear-gradient(135deg,#0e1a2e,#1a3060)">
-      <div class="modalTitle">🤝 التبادل التجاري</div>
-      <div class="modalSub">اختر ما تعرضه وما تطلبه</div>
-    </div>
-    <div class="modalBody">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div>
-          <div class="tradePlayerLabel" id="tradeFromName">أنت</div>
-          <input id="tradeFromMoney" type="number" placeholder="دنانير تعرضها" class="dinInput" style="width:100%;margin-bottom:6px">
-          <div id="tradeFromProps" class="tradePropList"></div>
-        </div>
-        <div>
-          <div class="tradePlayerLabel" id="tradeToName">المقابل</div>
-          <input id="tradeToMoney" type="number" placeholder="دنانير تطلبها" class="dinInput" style="width:100%;margin-bottom:6px">
-          <div id="tradeToProps" class="tradePropList"></div>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:14px">
-        <button class="goldBtn" style="flex:1" onclick="submitTrade()">إرسال العرض</button>
-        <button class="grayBtn" style="flex:1"
-          onclick="document.getElementById('tradeModal').classList.remove('open')">إلغاء</button>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- رد على عرض التبادل -->
-<div id="tradeResponseModal" class="modalOv">
-  <div class="modalBox" style="max-width:300px;text-align:center">
-    <div class="modalHead" style="background:linear-gradient(135deg,#1a3060,#2050A0)">
-      <div class="modalTitle">عرض تبادل</div>
+<!-- التبادل التجاري الاحترافي -->
+<div id="tradeOverlay" class="modalOv tradeOv" data-phase="build">
+  <div class="tradeBox">
+    <!-- رأس الواجهة -->
+    <div class="tradeHeader">
+      <div class="tradeHeaderTitle">⚖ التبادل التجاري</div>
+      <button class="tradeCancelBtn" onclick="cancelTradeOverlay()">✕ إلغاء</button>
     </div>
-    <div class="modalBody">
-      <div id="tradeResDesc" style="font-size:13px;color:#3a2000;margin-bottom:16px;line-height:1.6"></div>
-      <div style="display:flex;gap:8px">
-        <button class="goldBtn" style="flex:1" onclick="executeTrade()">✓ قبول</button>
-        <button class="redBtn"  style="flex:1" onclick="rejectTrade()">✗ رفض</button>
+    <!-- الجسم المزدوج -->
+    <div class="tradeBody">
+      <!-- ══ العمود الأيسر — اللاعب العارض ══ -->
+      <div class="tradeSide tradeSide--left" id="tradeSideLeft">
+        <div class="tradePlayerHdr">
+          <span class="tphEmoji" id="tradeLeftEmoji">🧑</span>
+          <div class="tphInfo">
+            <div class="tphName" id="tradeLeftName">اللاعب</div>
+            <div class="tphMoney" id="tradeLeftMoney">0 دينار</div>
+          </div>
+          <div class="tphRole">عارض</div>
+        </div>
+        <div class="tradeCashRow">
+          <label class="tradeCashLabel">دنانير تُعرض</label>
+          <input type="number" id="tradeLeftCash" class="dinInput tradeCashInput"
+                 placeholder="0" min="0" oninput="updateTradeCashLabel('left')">
+          <span class="tradeCashBadge" id="tradeLeftCashBadge">0 ﷼</span>
+        </div>
+        <div class="tradeSectionLabel">العقارات المتاحة</div>
+        <div class="tradePropGrid" id="tradeLeftAvail"></div>
+        <div class="tradeSectionLabel tradeOfferingLabel">العرض 📤</div>
+        <div class="tradePropGrid tradeOfferingZone" id="tradeLeftOffer"></div>
+      </div>
+      <!-- ══ فاصل VS ══ -->
+      <div class="tradeVS">
+        <div class="tradeVSLine"></div>
+        <div class="tradeVSBadge">VS</div>
+        <div class="tradeVSLine"></div>
+      </div>
+      <!-- ══ العمود الأيمن — اللاعب المستقبل ══ -->
+      <div class="tradeSide tradeSide--right" id="tradeSideRight">
+        <div class="tradePlayerHdr">
+          <span class="tphEmoji" id="tradeRightEmoji">🤖</span>
+          <div class="tphInfo">
+            <div class="tphName" id="tradeRightName">الخصم</div>
+            <div class="tphMoney" id="tradeRightMoney">0 دينار</div>
+          </div>
+          <div class="tphRole">مستقبل</div>
+        </div>
+        <div class="tradeCashRow">
+          <label class="tradeCashLabel">دنانير تُطلب</label>
+          <input type="number" id="tradeRightCash" class="dinInput tradeCashInput"
+                 placeholder="0" min="0" oninput="updateTradeCashLabel('right')">
+          <span class="tradeCashBadge" id="tradeRightCashBadge">0 ﷼</span>
+        </div>
+        <div class="tradeSectionLabel">العقارات المتاحة</div>
+        <div class="tradePropGrid" id="tradeRightAvail"></div>
+        <div class="tradeSectionLabel tradeOfferingLabel">المطلوب 📥</div>
+        <div class="tradePropGrid tradeOfferingZone" id="tradeRightOffer"></div>
+      </div>
+    </div><!-- /tradeBody -->
+    <!-- شريط الإجراءات — build phase -->
+    <div class="tradeActions tradeActions--build">
+      <button class="goldBtn tradeActBtn" onclick="submitTradeOffer()">إرسال العرض 📨</button>
+    </div>
+    <!-- شريط الإجراءات — respond phase -->
+    <div class="tradeActions tradeActions--respond">
+      <div class="tradeResDesc" id="tradeResDesc"></div>
+      <div class="tradeResButtons">
+        <button class="goldBtn tradeActBtn" onclick="acceptTradeOffer()">✅ قبول</button>
+        <button class="redBtn  tradeActBtn" onclick="rejectTradeOffer()">❌ رفض</button>
+        <button class="grayBtn tradeActBtn" onclick="counterTradeOffer()">⚖️ عرض مضاد</button>
       </div>
     </div>
-  </div>
-</div>
-
+  </div><!-- /tradeBox -->
+</div><!-- /tradeOverlay -->
 <!-- إفلاس -->
 <div id="bankruptModal" class="modalOv">
   <div class="modalBox" style="max-width:260px;text-align:center">
