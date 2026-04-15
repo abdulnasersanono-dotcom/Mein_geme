@@ -1,253 +1,540 @@
 'use strict';
 
-/* ═══════════════════════════════════════════════════════════════
-   كلاس بناء اللوحة — يُولِّد SVG اللوحة من بيانات SQ
-   BoardBuilder Class — generates the SVG board from square data
-   يعتمد على: js/data/board-squares.js (SQ, sqMap, PC)
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   BoardBuilder — بنّاء لوحة درب الحرير
+   توليد SVG احترافي كامل للوحة اللعبة
+
+   يعتمد على:
+     js/data/board-squares.js  ← SQ[], sqMap{}, PC{}
+     (الكلاس لا يعرّف البيانات، يستهلكها فقط)
+
+   الواجهة العامة (توافق مع باقي الملفات):
+     boardBuilder.buildBoard()   ← البناء الرئيسي
+     buildBoard()                ← شيم للنداءات القديمة
+
+   يحقن النتيجة في:
+     <svg id="boardSvg">  داخل  <div id="boardGrid">
+
+   أبعاد اللوحة:
+     660 × 660 px
+     خلايا الزوايا : 96 × 96
+     خلايا الجانب  : 52 × 96  (تقريباً)
+═══════════════════════════════════════════════════════════════════════════ */
+
 class BoardBuilder {
 
     constructor() {
-        // ── أبعاد اللوحة (بكسل) ──
-        this.B  = 660;                          // الحجم الكلي للوحة
+        /* ── أبعاد اللوحة ── */
+        this.B  = 660;                          // الحجم الكلي
         this.C  = 96;                           // حجم خلية الزاوية
-        this.S  = (660 - 2 * 96) / 9;          // عرض خلية الجانب
-        this.CB = 18;                           // سماكة شريط اللون
+        this.S  = (660 - 2 * 96) / 9;          // عرض خلية الجانب ≈ 52.44
+        this.CB = 20;                           // سماكة شريط اللون
 
-        // ألوان خلفية الخلايا الخاصة
-        this._specBg = {
-            lant: 'rgba(200,148,8,.12)',
-            firm: 'rgba(90,8,8,.13)',
-            gate: 'rgba(10,10,90,.11)',
-            util: 'rgba(8,75,85,.11)',
-            tax:  'rgba(115,8,8,.11)',
+        /* ── ألوان الأنواع الخاصة ── */
+        this._SPEC_BG = {
+            lant: '#FFF8E6',   // بطاقة الفانوس
+            firm: '#FFF0F0',   // بطاقة الفرمان
+            gate: '#EEF2FF',   // بوابة / محطة
+            util: '#E8F5F0',   // مرفق
+            tax:  '#FFF0EC',   // ضريبة / جمارك
+        };
+
+        this._SPEC_ICON_COLOR = {
+            lant: '#B07800',
+            firm: '#8A0000',
+            gate: '#1A2B9A',
+            util: '#005C44',
+            tax:  '#7A2000',
         };
     }
 
-    /* ══════════════════════════════════════════════════════════
-       بناء خلية واحدة وإعادة HTML الـ SVG الخاص بها
-       @param {number} id   - رقم الخلية (0–39)
-       @param {number} x,y  - موضع الزاوية العلوية اليسرى
-       @param {number} w,h  - أبعاد الخلية
-       @param {string} side - اتجاه الخلية: bottom|right|top|left
-    ══════════════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════════════════════════════
+       دوال SVG المساعدة
+    ══════════════════════════════════════════════════════════════════════ */
+
+    /** مستطيل مع حدود */
+    _rect(x, y, w, h, fill, stroke = '#8B6914', sw = 0.8, rx = 0) {
+        return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" rx="${rx}"/>`;
+    }
+
+    /** نص SVG */
+    _text(x, y, content, size, fill, weight = 'normal', anchor = 'middle', extra = '') {
+        return `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="${size}" fill="${fill}" font-weight="${weight}" dominant-baseline="middle" font-family="'Scheherazade New','Amiri',Georgia,serif" ${extra}>${content}</text>`;
+    }
+
+    /** نقطة تحويل مجموعة */
+    _g(content, transform = '') {
+        return transform ? `<g transform="${transform}">${content}</g>` : `<g>${content}</g>`;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       بناء خلية واحدة
+       @param {number} id   رقم الخلية 0–39
+       @param {number} x,y  الزاوية العلوية اليسرى
+       @param {number} w,h  الأبعاد
+       @param {string} side bottom | right | top | left
+    ══════════════════════════════════════════════════════════════════════ */
     _buildCell(id, x, y, w, h, side) {
         const s = sqMap[id];
-        if (!s) return '';
+        if (!s) return `<!-- missing sq ${id} -->`;
 
         const cx  = x + w / 2;
         const cy  = y + h / 2;
-        const rot = { bottom: 0, right: -90, top: 180, left: 90 }[side];
 
-        // ── خلية الانطلاق (GO) ──
-        if (s.t === 'go') {
-            const ay = cy + 20;
-            return `<g>
-<defs><linearGradient id="goBg" x1="0%" y1="0%" x2="100%" y2="100%">
-  <stop offset="0%" stop-color="#1A5A28"/>
-  <stop offset="100%" stop-color="#0C3418"/>
-</linearGradient></defs>
-<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#goBg)" stroke="#8B6914" stroke-width=".7"/>
-<text x="${cx}" y="${cy-28}" text-anchor="middle" font-size="7.5" fill="rgba(160,255,140,.7)" font-family="Georgia,serif">انطلق</text>
-<text x="${cx+1}" y="${cy-2}" text-anchor="middle" font-size="32" fill="rgba(0,0,0,.28)" font-weight="900" font-family="Impact,sans-serif">GO</text>
-<text x="${cx}" y="${cy-3}" text-anchor="middle" font-size="32" fill="#FFFFFF" font-weight="900" font-family="Impact,sans-serif">GO</text>
-<path d="M ${cx+20} ${ay} Q ${cx+2} ${ay+15} ${cx-20} ${ay}" fill="none" stroke="#FFD060" stroke-width="3.5" stroke-linecap="round"/>
-<polygon points="${cx-20},${ay} ${cx-11},${ay-7} ${cx-11},${ay+7}" fill="#FFD060"/>
-<text x="${cx}" y="${cy+39}" text-anchor="middle" font-size="6" fill="rgba(200,255,160,.5)" font-family="monospace">+200 din</text>
-</g>`;
+        switch (s.t) {
+            case 'go':    return this._cellGo(s, x, y, w, h, cx, cy);
+            case 'corn':  return this._cellCorner(s, x, y, w, h, cx, cy);
+            case 'prop':  return this._cellProp(s, id, x, y, w, h, cx, cy, side);
+            default:      return this._cellSpecial(s, id, x, y, w, h, cx, cy, side);
         }
+    }
 
-        // ── خلايا الزوايا (سجن، استراحة، اذهب للسجن) ──
-        if (s.t === 'corn') {
-            return `<g>
-<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${s.bg}" stroke="#8B6914" stroke-width=".7"/>
-<text x="${cx}" y="${cy-17}" text-anchor="middle" font-size="26" dominant-baseline="middle">${s.i}</text>
-<text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="9" fill="#FFD060" font-weight="900" font-family="Georgia,serif">${s.n}</text>
-${s.s2 ? `<text x="${cx}" y="${cy+22}" text-anchor="middle" font-size="6.5" fill="rgba(255,215,0,.45)">${s.s2}</text>` : ''}
-</g>`;
-        }
+    /* ══════════════════════════════════════════════════════════════════════
+       خلية GO — الانطلاق
+    ══════════════════════════════════════════════════════════════════════ */
+    _cellGo(s, x, y, w, h, cx, cy) {
+        const { C } = this;
+        return `<g id="sq-go">
+  <defs>
+    <linearGradient id="goBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#16522A"/>
+      <stop offset="100%" stop-color="#0A2D16"/>
+    </linearGradient>
+    <radialGradient id="goGlow" cx="50%" cy="45%" r="50%">
+      <stop offset="0%"   stop-color="#3AFF70" stop-opacity=".18"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+  ${this._rect(x, y, w, h, 'url(#goBg)', '#5A9A30', 1.5)}
+  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#goGlow)"/>
 
-        // ── خلايا بقية الأنواع (عقار، بوابة، مرفق، ضريبة، بطاقة) ──
-        const isNavy = s.ml === 'navy';
-        const bg     = s.t === 'prop'
-            ? (isNavy ? 'url(#navyCell)' : 'rgba(255,250,232,.97)')
-            : (this._specBg[s.t] || 'rgba(245,232,200,.92)');
+  <!-- إطار داخلي ذهبي -->
+  <rect x="${x+4}" y="${y+4}" width="${w-8}" height="${h-8}" fill="none" stroke="#8FCC50" stroke-width=".7" rx="4" stroke-dasharray="4 3" opacity=".55"/>
 
-        // حساب موضع شريط اللون حسب اتجاه الخلية
-        let cbx = x, cby = y, cbw = w, cbh = this.CB;
-        if (s.t === 'prop') {
-            if      (side === 'bottom') { cby = y;                cbh = this.CB; cbw = w; }
-            else if (side === 'right')  { cbx = x;                cbw = this.CB; cbh = h; }
-            else if (side === 'top')    { cby = y + h - this.CB;  cbh = this.CB; cbw = w; }
-            else                        { cbx = x + w - this.CB;  cbw = this.CB; cbh = h; }
-        }
+  <!-- نص انطلق -->
+  <text x="${cx}" y="${cy-30}" text-anchor="middle" font-size="7.5"
+    fill="rgba(180,255,140,.75)" font-family="'Amiri',serif" font-weight="bold">${s.n || 'انطلق'}</text>
 
-        const bandFill  = isNavy ? 'url(#navyBand)' : (s.c || '#888');
-        const nameColor = s.t === 'firm' ? '#6A0808' : s.t === 'lant' ? '#6B4500' : '#1a0800';
+  <!-- GO الكبير -->
+  <text x="${cx+1.5}" y="${cy-4}" text-anchor="middle" font-size="34"
+    fill="rgba(0,0,0,.35)" font-weight="900" font-family="'Impact','Arial Black',sans-serif">GO</text>
+  <text x="${cx}" y="${cy-5}" text-anchor="middle" font-size="34"
+    fill="#FFFFFF" font-weight="900" font-family="'Impact','Arial Black',sans-serif"
+    filter="url(#goTextGlow)">GO</text>
 
-        // نص السعر أو التكلفة أسفل الخلية
-        let priceText = '';
-        if (s.p)
-            priceText = `<text x="${cx}" y="${cy+19}" text-anchor="middle" font-size="5.8" fill="#3a2000" font-family="'Courier New',monospace" dominant-baseline="middle">${s.p} din</text>`;
-        else if (s.sub)
-            priceText = `<text x="${cx}" y="${cy+19}" text-anchor="middle" font-size="6.5" fill="#8A0000" font-weight="bold" font-family="monospace" dominant-baseline="middle">-${s.sub} din</text>`;
-        else if (s.t === 'gate')
-            priceText = `<text x="${cx}" y="${cy+19}" text-anchor="middle" font-size="5.8" fill="#10105A" font-family="monospace" dominant-baseline="middle">200 din</text>`;
-        else if (s.t === 'util')
-            priceText = `<text x="${cx}" y="${cy+19}" text-anchor="middle" font-size="5.8" fill="#0A3A3A" font-family="monospace" dominant-baseline="middle">150 din</text>`;
+  <!-- سهم دائري -->
+  <path d="M ${cx+22} ${cy+21} Q ${cx} ${cy+36} ${cx-22} ${cy+21}"
+    fill="none" stroke="#FFD060" stroke-width="3" stroke-linecap="round"/>
+  <polygon points="${cx-22},${cy+21} ${cx-13},${cy+14} ${cx-13},${cy+28}" fill="#FFD060"/>
 
-        return `<g>
-<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${bg}" stroke="#8B6914" stroke-width=".7"/>
-${s.t === 'prop' ? `<rect x="${cbx}" y="${cby}" width="${cbw}" height="${cbh}" fill="${bandFill}"/>` : ''}
-<g transform="rotate(${rot},${cx},${cy})">
-${s.i ? `<text x="${cx}" y="${cy-9}" text-anchor="middle" font-size="13" dominant-baseline="middle">${s.i}</text>` : ''}
-<text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="7.2" fill="${nameColor}" font-weight="800" font-family="Georgia,serif" dominant-baseline="middle">${s.n}</text>
-${priceText}
-</g>
+  <!-- المكافأة -->
+  <text x="${cx}" y="${cy+45}" text-anchor="middle" font-size="6"
+    fill="rgba(180,255,140,.65)" font-family="monospace">+200 دينار</text>
 </g>`;
     }
 
-    /* ══════════════════════════════════════════════════════════
-       رسم نجمة ثمانية الرؤوس — للزينة في المنتصف
-       @param {number} cx,cy - المركز
-       @param {number} r1    - نصف قطر خارجي
-       @param {number} r2    - نصف قطر داخلي
-    ══════════════════════════════════════════════════════════ */
-    _starBurst(cx, cy, r1, r2) {
-        return Array.from({ length: 16 }, (_, i) => {
-            const a = i * Math.PI / 8 - Math.PI / 2;
+    /* ══════════════════════════════════════════════════════════════════════
+       خلية زاوية — سجن / استراحة / اذهب للسجن
+    ══════════════════════════════════════════════════════════════════════ */
+    _cellCorner(s, x, y, w, h, cx, cy) {
+        return `<g>
+  ${this._rect(x, y, w, h, s.bg || '#2A1800', '#8B6914', 1.2)}
+  <rect x="${x+4}" y="${y+4}" width="${w-8}" height="${h-8}" fill="none"
+    stroke="rgba(200,160,50,.3)" stroke-width=".6" rx="3"/>
+  <text x="${cx}" y="${cy-20}" text-anchor="middle" font-size="30"
+    dominant-baseline="middle">${s.i || '?'}</text>
+  <text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="9.5"
+    fill="#FFD060" font-weight="bold" font-family="'Amiri',serif"
+    dominant-baseline="middle">${s.n || ''}</text>
+  ${s.s2 ? `<text x="${cx}" y="${cy+24}" text-anchor="middle" font-size="6.5"
+    fill="rgba(255,215,0,.5)" dominant-baseline="middle">${s.s2}</text>` : ''}
+</g>`;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       خلية عقار — prop
+    ══════════════════════════════════════════════════════════════════════ */
+    _cellProp(s, id, x, y, w, h, cx, cy, side) {
+        const { CB } = this;
+        const isNavy  = s.ml === 'navy';
+        const cellBg  = isNavy ? 'url(#navyCell)' : '#FFFAEC';
+
+        // موضع شريط اللون (يكون دائماً نحو الخارج)
+        let band = '';
+        if (side === 'bottom') {
+            band = `<rect x="${x}" y="${y}"           width="${w}"  height="${CB}" fill="${isNavy ? 'url(#navyBand)' : s.c}" rx="0"/>`;
+        } else if (side === 'top') {
+            band = `<rect x="${x}" y="${y+h-CB}"      width="${w}"  height="${CB}" fill="${isNavy ? 'url(#navyBand)' : s.c}" rx="0"/>`;
+        } else if (side === 'right') {
+            band = `<rect x="${x}"     y="${y}"        width="${CB}" height="${h}"  fill="${isNavy ? 'url(#navyBand)' : s.c}" rx="0"/>`;
+        } else {
+            band = `<rect x="${x+w-CB}" y="${y}"       width="${CB}" height="${h}"  fill="${isNavy ? 'url(#navyBand)' : s.c}" rx="0"/>`;
+        }
+
+        // تدوير المحتوى حسب الجانب
+        const rot = { bottom: 0, right: -90, top: 180, left: 90 }[side];
+
+        // حساب المساحة المتاحة بعد الشريط
+        // للأسفل/الأعلى: ارتفاع متاح = h - CB، للأيسر/الأيمن: عرض متاح = h - CB
+        const innerH = h - CB;
+        const icx = cx, icy = side === 'bottom' ? y + CB + innerH/2 : cy;
+
+        return `<g>
+  ${this._rect(x, y, w, h, cellBg, '#B8960A', 0.7)}
+  ${band}
+  <!-- تظليل الشريط -->
+  <rect x="${side === 'bottom' ? x : side === 'top' ? x : side === 'right' ? x : x+w-CB}"
+        y="${side === 'bottom' ? y : side === 'top' ? y+h-CB : y}"
+        width="${side === 'bottom' || side === 'top' ? w : CB}"
+        height="${side === 'bottom' || side === 'top' ? CB : h}"
+        fill="rgba(255,255,255,.12)"/>
+  <g transform="rotate(${rot},${cx},${cy})">
+    <!-- أيقونة أو رمز الخلية -->
+    ${s.i ? `<text x="${cx}" y="${cy-10}" text-anchor="middle" font-size="14" dominant-baseline="middle">${s.i}</text>` : ''}
+    <!-- اسم الخلية -->
+    <text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="6.8"
+      fill="#1A0800" font-weight="800" font-family="'Amiri','Scheherazade New',serif"
+      dominant-baseline="middle">${s.n || ''}</text>
+    <!-- السعر -->
+    ${s.p ? `<text x="${cx}" y="${cy+18}" text-anchor="middle" font-size="5.8"
+      fill="#3A2000" font-family="'Courier New',monospace" dominant-baseline="middle"
+      >${s.p} دينار</text>` : ''}
+  </g>
+</g>`;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       خلية خاصة — bawaba / util / lant / firm / tax
+    ══════════════════════════════════════════════════════════════════════ */
+    _cellSpecial(s, id, x, y, w, h, cx, cy, side) {
+        const bg       = this._SPEC_BG[s.t]       || '#FAF4E8';
+        const txtColor = this._SPEC_ICON_COLOR[s.t] || '#2A1000';
+        const rot      = { bottom: 0, right: -90, top: 180, left: 90 }[side];
+
+        // خط الإطار الداخلي حسب النوع
+        const accentColor = {
+            lant: 'rgba(180,120,0,.4)',
+            firm: 'rgba(140,0,0,.4)',
+            gate: 'rgba(30,50,180,.35)',
+            util: 'rgba(0,100,70,.35)',
+            tax:  'rgba(160,60,0,.4)',
+        }[s.t] || 'rgba(139,105,20,.25)';
+
+        // نص السعر / العقوبة
+        let subText = '';
+        if (s.sub) {
+            subText = `<text x="${cx}" y="${cy+20}" text-anchor="middle" font-size="6.2"
+              fill="${txtColor}" font-family="monospace" dominant-baseline="middle">−${s.sub} دينار</text>`;
+        } else if (s.t === 'gate') {
+            subText = `<text x="${cx}" y="${cy+20}" text-anchor="middle" font-size="6.2"
+              fill="${txtColor}" font-family="monospace" dominant-baseline="middle">200 دينار</text>`;
+        } else if (s.t === 'util') {
+            subText = `<text x="${cx}" y="${cy+20}" text-anchor="middle" font-size="6.2"
+              fill="${txtColor}" font-family="monospace" dominant-baseline="middle">150 دينار</text>`;
+        } else if (s.p) {
+            subText = `<text x="${cx}" y="${cy+20}" text-anchor="middle" font-size="6.2"
+              fill="${txtColor}" font-family="monospace" dominant-baseline="middle">${s.p} دينار</text>`;
+        }
+
+        return `<g>
+  ${this._rect(x, y, w, h, bg, accentColor.replace('.', '_').includes('_') ? '#B8960A' : '#B8960A', 0.7)}
+  <!-- إطار داخلي ملوّن -->
+  <rect x="${x+2}" y="${y+2}" width="${w-4}" height="${h-4}" fill="none"
+    stroke="${accentColor}" stroke-width="1.2" rx="1"/>
+  <g transform="rotate(${rot},${cx},${cy})">
+    ${s.i ? `<text x="${cx}" y="${cy-10}" text-anchor="middle" font-size="15" dominant-baseline="middle">${s.i}</text>` : ''}
+    <text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="6.8"
+      fill="${txtColor}" font-weight="800" font-family="'Amiri',serif"
+      dominant-baseline="middle">${s.n || ''}</text>
+    ${subText}
+  </g>
+</g>`;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       نجمة ثمانية — للزخرفة
+    ══════════════════════════════════════════════════════════════════════ */
+    _star(cx, cy, r1, r2, points = 8) {
+        return Array.from({ length: points * 2 }, (_, i) => {
+            const a = i * Math.PI / points - Math.PI / 2;
             const r = i % 2 ? r2 : r1;
-            return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
+            return `${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`;
         }).join(' ');
     }
 
-    /* ══════════════════════════════════════════════════════════
-       بناء اللوحة كاملةً وحقنها في boardSvg
-    ══════════════════════════════════════════════════════════ */
-    buildBoard() {
-        const { B, C, S } = this;
-        const mid  = B / 2;
-        let cells  = '';
-
-        // الصف السفلي (خلايا 0–10، من اليمين لليسار)
-        for (let i = 0; i <= 10; i++) {
-            const isCorner = i === 0 || i === 10;
-            const w = isCorner ? C : S;
-            const x = i === 0 ? B - C : i === 10 ? 0 : B - C - i * S;
-            cells += this._buildCell(i, x, B - C, w, C, 'bottom');
-        }
-
-        // العمود الأيسر (خلايا 11–19)
-        for (let i = 0; i < 9; i++)
-            cells += this._buildCell(11 + i, 0, B - C - (i + 1) * S, C, S, 'left');
-
-        // الصف العلوي (خلايا 20–30، من اليسار لليمين)
-        for (let i = 0; i <= 10; i++) {
-            const isCorner = i === 0 || i === 10;
-            const w = isCorner ? C : S;
-            const x = i === 0 ? 0 : i === 10 ? B - C : C + (i - 1) * S;
-            cells += this._buildCell(20 + i, x, 0, w, C, 'top');
-        }
-
-        // العمود الأيمن (خلايا 31–39)
-        for (let i = 0; i < 9; i++)
-            cells += this._buildCell(31 + i, B - C, C + i * S, C, S, 'right');
-
-        // حقن SVG الكامل
-        document.getElementById('boardSvg').innerHTML = `
-<defs>
-  <!-- نمط خلفية المنتصف -->
-  <pattern id="bgTile" width="44" height="44" patternUnits="userSpaceOnUse">
-    <rect width="44" height="44" fill="#1F1000"/>
-    <path d="M22 0L44 22L22 44L0 22Z" fill="none" stroke="#6B3A00" stroke-width=".55" opacity=".26"/>
-    <circle cx="22" cy="22" r="8.5" fill="none" stroke="#6B3A00" stroke-width=".28" opacity=".16"/>
-  </pattern>
-  <!-- تدرجات الألوان -->
+    /* ══════════════════════════════════════════════════════════════════════
+       SVG الـ defs الرئيسي — تدرجات، فلاتر، أنماط
+    ══════════════════════════════════════════════════════════════════════ */
+    _buildDefs() {
+        const { B, C } = this;
+        const mid = B / 2;
+        return `<defs>
+  <!-- ═══ تدرجات الخلفية ═══ -->
+  <linearGradient id="boardEdge" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%"   stop-color="#2C1800"/>
+    <stop offset="50%"  stop-color="#1A0E00"/>
+    <stop offset="100%" stop-color="#2C1800"/>
+  </linearGradient>
   <linearGradient id="parchment" x1="0%" y1="0%" x2="100%" y2="100%">
-    <stop offset="0%" stop-color="#F5E6C0"/>
-    <stop offset="55%" stop-color="#EDDAA0"/>
-    <stop offset="100%" stop-color="#E0C470"/>
+    <stop offset="0%"   stop-color="#F8EDCC"/>
+    <stop offset="40%"  stop-color="#F0DC9E"/>
+    <stop offset="100%" stop-color="#DEC460"/>
   </linearGradient>
   <radialGradient id="centerBg" cx="50%" cy="50%" r="55%">
-    <stop offset="0%" stop-color="#2C1400" stop-opacity=".97"/>
-    <stop offset="100%" stop-color="#100600" stop-opacity=".99"/>
+    <stop offset="0%"   stop-color="#2C1600" stop-opacity=".98"/>
+    <stop offset="100%" stop-color="#0E0600" stop-opacity="1"/>
   </radialGradient>
+  <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FF9900" stop-opacity=".07"/>
+    <stop offset="100%" stop-color="transparent"/>
+  </radialGradient>
+
+  <!-- ═══ تدرجات العقارات الكحلية ═══ -->
   <linearGradient id="navyBand" x1="0%" y1="0%" x2="100%" y2="0%">
-    <stop offset="0%" stop-color="#040C28"/>
-    <stop offset="50%" stop-color="#3858D8"/>
-    <stop offset="100%" stop-color="#040C28"/>
+    <stop offset="0%"   stop-color="#020C22"/>
+    <stop offset="40%"  stop-color="#2A46C8"/>
+    <stop offset="100%" stop-color="#020C22"/>
   </linearGradient>
   <linearGradient id="navyCell" x1="0%" y1="0%" x2="100%" y2="100%">
-    <stop offset="0%" stop-color="#F0F4FF"/>
-    <stop offset="100%" stop-color="#D5DEFF"/>
+    <stop offset="0%"   stop-color="#EEF2FF"/>
+    <stop offset="100%" stop-color="#D8E0FF"/>
   </linearGradient>
-  <!-- فلتر التوهج للرموز -->
-  <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-    <feGaussianBlur stdDeviation="3" result="b"/>
+
+  <!-- ═══ نمط خلفية المنتصف ═══ -->
+  <pattern id="centerPattern" width="52" height="52" patternUnits="userSpaceOnUse">
+    <rect width="52" height="52" fill="#1C0C00"/>
+    <path d="M26 0 L52 26 L26 52 L0 26Z" fill="none" stroke="#7A4400" stroke-width=".5" opacity=".3"/>
+    <circle cx="26" cy="26" r="10" fill="none" stroke="#6B3800" stroke-width=".3" opacity=".2"/>
+    <circle cx="0"  cy="0"  r="3"  fill="#6B3800" opacity=".15"/>
+    <circle cx="52" cy="52" r="3"  fill="#6B3800" opacity=".15"/>
+    <circle cx="52" cy="0"  r="3"  fill="#6B3800" opacity=".15"/>
+    <circle cx="0"  cy="52" r="3"  fill="#6B3800" opacity=".15"/>
+  </pattern>
+
+  <!-- ═══ فلاتر الإضاءة ═══ -->
+  <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="4" result="b"/>
     <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
   </filter>
-</defs>
+  <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="2.5" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="goTextGlow" x="-10%" y="-10%" width="120%" height="120%">
+    <feGaussianBlur stdDeviation="1.5" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="shadow" x="-5%" y="-5%" width="115%" height="125%">
+    <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity=".35"/>
+  </filter>
 
-<!-- خلفية اللوحة -->
-<rect width="${B}" height="${B}" fill="#0d0600"/>
-<rect x="2" y="2" width="${B-4}" height="${B-4}" fill="url(#parchment)" rx="2"/>
+  <!-- ═══ تدرج شريط الإطار الخارجي ═══ -->
+  <linearGradient id="borderGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+    <stop offset="0%"   stop-color="#D4A040"/>
+    <stop offset="50%"  stop-color="#8B6914"/>
+    <stop offset="100%" stop-color="#D4A040"/>
+  </linearGradient>
+</defs>`;
+    }
 
-<!-- منطقة المنتصف -->
-<rect x="${C}" y="${C}" width="${B-2*C}" height="${B-2*C}" fill="url(#bgTile)" rx="2"/>
-<rect x="${C}" y="${C}" width="${B-2*C}" height="${B-2*C}" fill="url(#centerBg)" rx="2"/>
+    /* ══════════════════════════════════════════════════════════════════════
+       زخارف وسط اللوحة
+    ══════════════════════════════════════════════════════════════════════ */
+    _buildCenter() {
+        const { B, C } = this;
+        const mid = B / 2;
+        const iw  = B - 2 * C;   // عرض المنطقة الداخلية ≈ 468
 
-<!-- خلايا اللوحة -->
-${cells}
+        // خطوط الزخرفة الدائرية
+        const rings = [108, 90, 72].map((r, i) =>
+            `<circle cx="${mid}" cy="${mid}" r="${r}"
+              fill="none" stroke="#8B6914" stroke-width="${i === 0 ? 0.8 : 0.4}"
+              stroke-dasharray="${i === 2 ? '5 3' : 'none'}" opacity="${0.35 - i*0.08}"/>`
+        ).join('\n  ');
 
-<!-- إطار المنتصف -->
-<rect x="${C}" y="${C}" width="${B-2*C}" height="${B-2*C}" fill="none" stroke="#8B6914" stroke-width="2"/>
+        // خطوط الشعاع
+        const rays = Array.from({ length: 12 }, (_, i) => {
+            const a = i * 30 * Math.PI / 180;
+            const x1 = mid + 74  * Math.cos(a), y1 = mid + 74  * Math.sin(a);
+            const x2 = mid + 106 * Math.cos(a), y2 = mid + 106 * Math.sin(a);
+            return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#8B6914" stroke-width=".5" opacity=".28"/>`;
+        }).join('\n  ');
 
-<!-- زخارف المنتصف -->
-<circle cx="${mid}" cy="${mid}" r="113" fill="none" stroke="#8B6914" stroke-width=".6" stroke-dasharray="6 4" opacity=".28"/>
-<polygon points="${this._starBurst(mid,mid,97,44)}" fill="none" stroke="#8B6914" stroke-width=".8" opacity=".26"/>
-<polygon points="${this._starBurst(mid,mid,97,44)}" fill="none" stroke="#C4A040" stroke-width=".4" opacity=".14" transform="rotate(22.5,${mid},${mid})"/>
-${[0,45,90,135,180,225,270,315].map(a =>
-    `<ellipse cx="${mid}" cy="${mid-57}" rx="9" ry="19" fill="none" stroke="#8B6914" stroke-width=".4" opacity=".18" transform="rotate(${a},${mid},${mid})"/>`
-).join('')}
+        return `<g id="boardCenter">
+  <!-- خلفية المنتصف -->
+  <rect x="${C}" y="${C}" width="${iw}" height="${iw}" fill="url(#centerPattern)" rx="3"/>
+  <rect x="${C}" y="${C}" width="${iw}" height="${iw}" fill="url(#centerBg)"      rx="3"/>
+  <rect x="${C}" y="${C}" width="${iw}" height="${iw}" fill="url(#centerGlow)"    rx="3"/>
 
-<!-- دائرة المركز -->
-<circle cx="${mid}" cy="${mid}" r="67" fill="#1C0C00" opacity=".9"/>
-<circle cx="${mid}" cy="${mid}" r="64" fill="none" stroke="#C4A040" stroke-width="1.3" opacity=".47"/>
+  <!-- حدود المنتصف الذهبية -->
+  <rect x="${C}" y="${C}" width="${iw}" height="${iw}" fill="none"
+    stroke="#8B6914" stroke-width="2.5" rx="3"/>
+  <rect x="${C+4}" y="${C+4}" width="${iw-8}" height="${iw-8}" fill="none"
+    stroke="rgba(200,160,50,.25)" stroke-width=".8" rx="2"/>
 
-<!-- بطاقة الفانوس -->
-<rect x="${mid-92}" y="${mid-48}" width="72" height="57" rx="5" fill="rgba(180,130,0,.10)" stroke="rgba(200,160,0,.35)" stroke-width=".8"/>
-<text x="${mid-56}" y="${mid-27}" text-anchor="middle" font-size="18">🪔</text>
-<text x="${mid-56}" y="${mid-8}" text-anchor="middle" font-size="6.5" fill="#D4A020" font-weight="bold">الفانوس السحري</text>
-<text x="${mid-56}" y="${mid+6}" text-anchor="middle" font-size="5" fill="rgba(210,160,20,.58)">ميزات فقط</text>
+  <!-- حلقات الزخرفة -->
+  ${rings}
 
-<!-- بطاقة الفرمان -->
-<rect x="${mid+20}" y="${mid-48}" width="72" height="57" rx="5" fill="rgba(80,10,10,.11)" stroke="rgba(150,40,40,.38)" stroke-width=".8"/>
-<text x="${mid+56}" y="${mid-27}" text-anchor="middle" font-size="18">📜</text>
-<text x="${mid+56}" y="${mid-8}" text-anchor="middle" font-size="6.5" fill="#C03030" font-weight="bold">فرمان الوالي</text>
-<text x="${mid+56}" y="${mid+6}" text-anchor="middle" font-size="5" fill="rgba(190,60,60,.58)">عقوبات فقط</text>
+  <!-- أشعة الزينة -->
+  ${rays}
 
-<!-- اسم اللعبة -->
-<text x="${mid}" y="${mid+22}" text-anchor="middle" font-size="13" fill="#FFD060" font-weight="900" font-family="Impact,sans-serif" filter="url(#glow)" letter-spacing="2">SILK ROAD</text>
-<text x="${mid}" y="${mid+37}" text-anchor="middle" font-size="8.5" fill="#C4A040">The Golden Era</text>
-<text x="${mid}" y="${mid+52}" text-anchor="middle" font-size="8.5" fill="#C4A040" font-family="serif">🐪  درب الأمصار  🐪</text>
+  <!-- نجمة المركز -->
+  <polygon points="${this._star(mid, mid, 95, 45)}"
+    fill="none" stroke="#8B6914" stroke-width=".9" opacity=".3"/>
+  <polygon points="${this._star(mid, mid, 95, 45)}"
+    fill="none" stroke="#C4A040" stroke-width=".4" opacity=".15"
+    transform="rotate(22.5,${mid},${mid})"/>
 
-<!-- نقاط زوايا اللوحة -->
-${[[C,C],[B-C,C],[C,B-C],[B-C,B-C]].map(([px,py]) =>
-    `<circle cx="${px}" cy="${py}" r="6" fill="#8B6914" opacity=".52"/>`
-).join('')}
+  <!-- هالة مركزية -->
+  <circle cx="${mid}" cy="${mid}" r="66" fill="#160900" opacity=".92"/>
+  <circle cx="${mid}" cy="${mid}" r="63" fill="none" stroke="#C4A040" stroke-width="1.4" opacity=".55"/>
+  <circle cx="${mid}" cy="${mid}" r="58" fill="none" stroke="rgba(196,160,64,.2)" stroke-width=".5"/>
 
-<!-- الإطار الخارجي -->
-<rect x="1" y="1" width="${B-2}" height="${B-2}" fill="none" stroke="#5A3808" stroke-width="5" rx="3"/>
-<rect x="10" y="10" width="${B-20}" height="${B-20}" fill="none" stroke="#9B7A14" stroke-width="1.2" rx="2"/>`;
+  <!-- ════ بطاقة الفانوس السحري (يسار) ════ -->
+  <g filter="url(#shadow)">
+    <rect x="${mid-105}" y="${mid-54}" width="82" height="66" rx="6"
+      fill="rgba(60,35,0,.75)" stroke="rgba(200,150,0,.55)" stroke-width="1.2"/>
+    <rect x="${mid-103}" y="${mid-52}" width="78" height="62" rx="5"
+      fill="none" stroke="rgba(200,150,0,.2)" stroke-width=".5"/>
+  </g>
+  <text x="${mid-64}" y="${mid-30}" text-anchor="middle" font-size="20">🪔</text>
+  <text x="${mid-64}" y="${mid-7}" text-anchor="middle" font-size="7.5"
+    fill="#FFCC44" font-weight="bold" font-family="'Amiri',serif">الفانوس السحري</text>
+  <text x="${mid-64}" y="${mid+8}" text-anchor="middle" font-size="6"
+    fill="rgba(255,200,100,.6)">ميزات فقط</text>
+
+  <!-- ════ بطاقة الفرمان (يمين) ════ -->
+  <g filter="url(#shadow)">
+    <rect x="${mid+23}" y="${mid-54}" width="82" height="66" rx="6"
+      fill="rgba(50,0,0,.78)" stroke="rgba(200,50,50,.5)" stroke-width="1.2"/>
+    <rect x="${mid+25}" y="${mid-52}" width="78" height="62" rx="5"
+      fill="none" stroke="rgba(200,50,50,.18)" stroke-width=".5"/>
+  </g>
+  <text x="${mid+64}" y="${mid-30}" text-anchor="middle" font-size="20">📜</text>
+  <text x="${mid+64}" y="${mid-7}" text-anchor="middle" font-size="7.5"
+    fill="#FF6666" font-weight="bold" font-family="'Amiri',serif">فرمان الوالي</text>
+  <text x="${mid+64}" y="${mid+8}" text-anchor="middle" font-size="6"
+    fill="rgba(255,120,120,.6)">عقوبات فقط</text>
+
+  <!-- ════ اسم اللعبة — المركز ════ -->
+  <text x="${mid}" y="${mid+27}" text-anchor="middle" font-size="14.5"
+    fill="#FFD060" font-weight="900" font-family="'Impact','Arial Black',sans-serif"
+    filter="url(#glow)" letter-spacing="3">SILK ROAD</text>
+  <text x="${mid}" y="${mid+42}" text-anchor="middle" font-size="8"
+    fill="#C4A040" font-family="Georgia,serif" letter-spacing="1">The Golden Era</text>
+
+  <!-- خط فاصل رفيع -->
+  <line x1="${mid-48}" y1="${mid+49}" x2="${mid+48}" y2="${mid+49}"
+    stroke="#8B6914" stroke-width=".7" opacity=".5"/>
+
+  <text x="${mid}" y="${mid+60}" text-anchor="middle" font-size="9"
+    fill="#C4A040" font-family="'Amiri','Scheherazade New',serif">🐪 درب الأمصار 🐪</text>
+
+  <!-- نقاط تقاطع الحدود -->
+  ${[[C,C],[B-C,C],[C,B-C],[B-C,B-C]].map(([px,py]) =>
+      `<circle cx="${px}" cy="${py}" r="7" fill="#8B6914" opacity=".6"/>
+       <circle cx="${px}" cy="${py}" r="3.5" fill="#FFD060" opacity=".5"/>`
+  ).join('\n  ')}
+</g>`;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       بناء خلايا الأربعة جوانب
+    ══════════════════════════════════════════════════════════════════════ */
+    _buildAllCells() {
+        const { B, C, S } = this;
+        let out = '';
+
+        /* ── الصف السفلي: الخلايا 0–10 (من اليمين لليسار) ── */
+        for (let i = 0; i <= 10; i++) {
+            const isCorner = i === 0 || i === 10;
+            const w = isCorner ? C : S;
+            let x;
+            if      (i === 0)  x = B - C;          // GO — أسفل يمين
+            else if (i === 10) x = 0;               // سجن — أسفل يسار
+            else               x = B - C - i * S;
+            out += this._buildCell(i, x, B - C, w, C, 'bottom');
+        }
+
+        /* ── العمود الأيسر: الخلايا 11–19 (من أسفل لأعلى) ── */
+        for (let i = 0; i < 9; i++)
+            out += this._buildCell(11 + i, 0, B - C - (i + 1) * S, C, S, 'left');
+
+        /* ── الصف العلوي: الخلايا 20–30 (من اليسار لليمين) ── */
+        for (let i = 0; i <= 10; i++) {
+            const isCorner = i === 0 || i === 10;
+            const w = isCorner ? C : S;
+            let x;
+            if      (i === 0)  x = 0;
+            else if (i === 10) x = B - C;
+            else               x = C + (i - 1) * S;
+            out += this._buildCell(20 + i, x, 0, w, C, 'top');
+        }
+
+        /* ── العمود الأيمن: الخلايا 31–39 (من أعلى لأسفل) ── */
+        for (let i = 0; i < 9; i++)
+            out += this._buildCell(31 + i, B - C, C + i * S, C, S, 'right');
+
+        return out;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       الإطار الخارجي المزخرف
+    ══════════════════════════════════════════════════════════════════════ */
+    _buildFrame() {
+        const { B } = this;
+        return `<g id="boardFrame">
+  <!-- الطبقة الخارجية الداكنة -->
+  <rect x="0" y="0" width="${B}" height="${B}" fill="url(#boardEdge)" rx="4"/>
+  <!-- خلفية الرق -->
+  <rect x="3" y="3" width="${B-6}" height="${B-6}" fill="url(#parchment)" rx="3"/>
+  <!-- الحدود الذهبية الخارجية -->
+  <rect x="1"  y="1"  width="${B-2}"  height="${B-2}"  fill="none" stroke="#4A2800" stroke-width="6"  rx="4"/>
+  <rect x="5"  y="5"  width="${B-10}" height="${B-10}" fill="none" stroke="url(#borderGrad)" stroke-width="2" rx="2"/>
+  <rect x="9"  y="9"  width="${B-18}" height="${B-18}" fill="none" stroke="rgba(180,130,20,.35)" stroke-width=".7" rx="1"/>
+  <!-- نقاط الزوايا الأربع -->
+  ${[[5,5],[B-5,5],[5,B-5],[B-5,B-5]].map(([px,py]) =>
+      `<circle cx="${px}" cy="${py}" r="5" fill="#8B6914"/>
+       <circle cx="${px}" cy="${py}" r="2.5" fill="#FFD060" opacity=".7"/>`
+  ).join('\n  ')}
+</g>`;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       البناء الرئيسي — يُحقن في <svg id="boardSvg">
+    ══════════════════════════════════════════════════════════════════════ */
+    buildBoard() {
+        const { B } = this;
+        const svg = document.getElementById('boardSvg');
+        if (!svg) {
+            console.error('[BoardBuilder] لم يُعثر على #boardSvg');
+            return;
+        }
+
+        // ضبط أبعاد SVG
+        svg.setAttribute('viewBox', `0 0 ${B} ${B}`);
+        svg.setAttribute('width',  `${B}`);
+        svg.setAttribute('height', `${B}`);
+
+        svg.innerHTML =
+            this._buildDefs()    +   // تعريفات SVG
+            this._buildFrame()   +   // الإطار الخارجي
+            this._buildAllCells()+   // خلايا اللوحة الـ 40
+            this._buildCenter();     // زخارف وبطاقات المنتصف
+
+        // إشعار باقتمال البناء
+        document.dispatchEvent(new CustomEvent('boardReady'));
+        console.log('[BoardBuilder] ✓ اللوحة جاهزة');
     }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// الإنستانس العالمي
+/* ═══════════════════════════════════════════════════════════════════════════
+   الإنستانس العالمي — instance واحد للعبة كاملة
+═══════════════════════════════════════════════════════════════════════════ */
 const boardBuilder = new BoardBuilder();
 
-// ── دالة تحويل للتوافق مع الكود القديم ──
+/* ── شيم للتوافق مع النداءات القديمة ── */
 function buildBoard() { boardBuilder.buildBoard(); }
 
-// بناء اللوحة فور تحميل الملف
+/* ── بناء اللوحة فور تحميل الملف ── */
 boardBuilder.buildBoard();
