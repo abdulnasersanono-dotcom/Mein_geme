@@ -83,7 +83,7 @@ class ActionHandler {
             const actual = Math.min(amount, other.money); // لا يدفع أكثر مما يملك
             other.money -= actual;
             p.money     += actual;
-            if (other.money < 0) this._checkBankruptcy(i);
+_checkBankruptcy(i); // Placeholder - implement if bankruptcy logic needed
         });
         fx.sndCoin();
         hud.refreshTopBar();
@@ -981,7 +981,13 @@ class ActionHandler {
         if (giving === 0) return 'accept';
         return (receiving / giving) >= 0.85 ? 'accept' : 'reject';
     }
-    /* ══════════════════════════════════════════════════════════
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Global instance for legacy compatibility
+const actionHandler = new ActionHandler();
+
+// ── Global functions ──
 function buyHouse(sqIdx)                     { actionHandler.buyHouse(sqIdx); }
 function sellHouse(sqIdx)                    { actionHandler.sellHouse(sqIdx); }
 function openTradeModal()                    { actionHandler.openTradeModal(); }
@@ -994,6 +1000,20 @@ function rejectTradeOffer()                  { actionHandler.rejectTradeOffer();
 function counterTradeOffer()                 { actionHandler.counterTradeOffer(); }
 function cancelTradeOverlay()                { actionHandler.cancelTradeOverlay(); }
 function tradeBlockedPropClick()             { actionHandler.tradeBlockedPropClick(); }
-function deductMoney(pidx, amount)           { actionHandler.deductMoney(pidx, amount); }
-function repairAll(pidx, hCost, htCost)      { actionHandler.repairAll(pidx, hCost, htCost); }
+function deductMoney(pidx, amount) {
+  const p = G.players[pidx];
+  p.money = Math.max(0, p.money - amount);
+  p.lastGain = -amount;
+  fx.sndErr();
+  hud.refreshTopBar();
+  if (p.money === 0) actionHandler._checkBankruptcy(pidx);
+}
+function repairAll(pidx, hCost, htCost) {
+  G.players[pidx].props.forEach(sqId => {
+    const prop = G.props[sqId];
+    if (!prop) return;
+    const cost = prop.houses === 5 ? htCost : hCost;
+    deductMoney(pidx, cost);
+  });
+}
 function endGame(winner)                     { actionHandler.endGame(winner); }

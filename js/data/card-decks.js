@@ -93,7 +93,7 @@ const LANTERN_CARDS = [
     id:   'L14',
     txt:  'خادم الفانوس',
     rule: 'انتقل إلى خانة "انطلق" واستلم مكافأتك.',
-    fn:   (p, gi) => { moveTo(gi, 0, true); sndMagic(); },
+    fn:   (p, gi) => { moveTo(gi, 0, true); fx.sndMagic ? fx.sndMagic() : fx.sndScroll(); },
   },
   {
     id:   'L15',

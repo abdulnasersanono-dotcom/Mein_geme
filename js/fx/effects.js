@@ -238,6 +238,7 @@ function sndCoin()              { fx.sndCoin(); }
 function sndDice()              { fx.sndDice(); }
 function sndScroll()            { fx.sndScroll(); }
 function sndErr()               { fx.sndErr(); }
+function sndMagic()             { fx.tone(523, 'sine', 0.3, 0.1); }
 function sndJail()              { fx.sndJail(); }
 function startTimer()           { fx.startTimer(); }
 function stopTimer()            { fx.stopTimer(); }

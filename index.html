@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <title>Silk Road: The Golden Era 🐪</title>
+  <link rel="icon" href="favicon.png">
 
   <!-- ══════════════════════════════════════════════
        CSS — الترتيب مهم: tokens أولاً ثم الباقي
@@ -218,8 +219,8 @@
         <span>رصيدك: <strong id="buyModalBalance" style="color:#40CC40">0</strong> din</span>
       </div>
       <div style="display:flex;gap:8px;margin-top:14px">
-        <button class="goldBtn" style="flex:1" onclick="confirmBuy()">🏠 شراء</button>
-        <button class="grayBtn" style="flex:1" onclick="rejectBuy()">🔨 مزاد</button>
+        <button class="goldBtn" style="flex:1" onclick="actionHandler.confirmBuy()">🏠 شراء</button>
+        <button class="grayBtn" style="flex:1" onclick="actionHandler.rejectBuy()">🔨 مزاد</button>
       </div>
     </div>
   </div>
@@ -236,7 +237,7 @@
       <div id="auctionBidList" style="margin-bottom:10px"></div>
       <div style="display:flex;gap:6px;align-items:center">
         <input id="auctionMyBidInput" type="number" placeholder="مزايدتك..." class="dinInput" style="flex:1">
-        <button class="goldBtn" onclick="submitMyAuction()">مزايدة</button>
+      <button class="goldBtn" onclick="actionHandler.submitMyAuction()">مزايدة</button>
       </div>
     </div>
   </div>
