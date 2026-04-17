@@ -428,11 +428,20 @@
 <script src="js/screens/gamemode.js"></script>
 <script src="js/screens/newgame.js"></script>
 <script src="js/screens/game.js"></script>
+<script src="js/screens/online.js"></script>
 <script src="js/screens/navigator.js"></script>
+
+<!-- ✅ أضف هذا السطر — Firebase Multiplayer -->
+<script type="module" src="js/online/multiplayer.js"></script>
 
 <script>
   const nav = createNavigator();
   nav.start('language');
+
+  // ✅ أضف هذا — يربط Firebase بمنطق اللعبة
+  window.addEventListener('load', () => {
+    if (typeof installMPHooks === 'function') installMPHooks();
+  });
 </script>
 <!-- ======================================================= -->
 

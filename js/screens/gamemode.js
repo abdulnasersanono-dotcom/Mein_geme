@@ -43,7 +43,6 @@ window.GameModeScreen = (() => {
             <button id="btn-online"    class="btn-3d btn-blue mode-btn" data-mode="online">
               <span class="btn-icon">🌐</span>
               <span class="btn-text">PLAY ONLINE</span>
-              <span class="btn-badge">SOON</span>
             </button>
 
             <button id="btn-solo"      class="btn-3d btn-red mode-btn" data-mode="solo">
@@ -118,10 +117,11 @@ window.GameModeScreen = (() => {
       nav.goTo('newgame');
     });
 
-    /* ─ ONLINE (قريباً) ─ */
-    document.getElementById('btn-online').addEventListener('click', () => {
-      _showToast('🌐 Online mode coming soon! / قريباً');
-    });
+    /* ─ ONLINE ─ */
+document.getElementById('btn-online').addEventListener('click', () => {
+  nav.state.mode = 'online';
+  nav.goTo('online');
+});
 
     /* ─ HOW TO PLAY ─ */
     document.getElementById('btn-howto').addEventListener('click', () => {

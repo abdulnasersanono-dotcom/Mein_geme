@@ -16,6 +16,7 @@ window.createNavigator = function () {
     gamemode: window.GameModeScreen,
     newgame:  window.NewGameScreen,
     game:     window.GameScreen,
+    online:   window.OnlineScreen,
   };
 
   /* ── الحالة المشتركة بين جميع الشاشات ─────────────────────── */
